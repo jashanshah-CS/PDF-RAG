@@ -1,0 +1,4 @@
+question,expected_keywords,expected_page,should_refuse
+Replace this with an answerable question,keyword1|keyword2,1,false
+Replace this with a paraphrased question,expected phrase,2,false
+Replace this with a question not answered by the PDF,,,true

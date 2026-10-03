@@ -16,6 +16,7 @@ tested before the next feature is added.
 - Show similarity scores and page-level source information
 - Generate an evidence-grounded answer with local Llama 3.2 through Ollama
 - Cite numbered sources and refuse questions unsupported by the retrieved text
+- Evaluate retrieval, answers, citations, refusals, and response time from CSV
 - Preview original pages, chunks, and a sample embedding
 - Process documents locally on the computer
 
@@ -41,7 +42,7 @@ Top three evidence chunks
 Local Llama 3.2 answer with source labels
 ```
 
-Evaluation against prepared questions is the next stage.
+Version 1 now includes a repeatable evaluation runner.
 
 ## Requirements
 
@@ -69,6 +70,27 @@ The first PDF upload may take longer while the free embedding model downloads.
 uv run pytest -q
 ```
 
+## Evaluate Version 1
+
+Copy `evaluation/questions.example.csv` to `evaluation/questions.csv`, then
+replace the examples with 15–20 questions about your PDF.
+
+Each CSV row contains:
+
+- `question`: the question sent to the RAG pipeline;
+- `expected_keywords`: required answer terms separated by `|`;
+- `expected_page`: the page that should be retrieved and cited;
+- `should_refuse`: `true` when the PDF does not contain the answer.
+
+Run the full PDF pipeline and save a detailed report:
+
+```powershell
+uv run python evaluate.py --pdf "C:\path\to\document.pdf"
+```
+
+The report is written to `evaluation/results.csv`. Local questions, results,
+and PDFs are ignored by Git so private evaluation material is not published.
+
 ## Version 1 roadmap
 
 - [x] Upload and extract one PDF
@@ -77,7 +99,8 @@ uv run pytest -q
 - [x] Retrieve the chunks most relevant to a question
 - [x] Generate an answer using only retrieved evidence
 - [x] Display filename and page citations
-- [ ] Evaluate with 15–20 prepared questions
+- [x] Add a repeatable evaluation runner
+- [ ] Achieve acceptable results on 15–20 prepared questions
 
 ## Limitations
 
