@@ -1,0 +1,26 @@
+.venv/
+.uv-cache/
+.uv-python/
+.model-cache/
+
+# Python-generated files
+__pycache__/
+.pytest_cache/
+*.py[cod]
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+
+# Private or test documents
+data/
+uploads/
+*.pdf
+
+# Editors and operating systems
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

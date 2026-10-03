@@ -1,0 +1,20 @@
+[project]
+name = "rag-project"
+version = "0.1.0"
+description = "A beginner-friendly, local PDF RAG application built one step at a time."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pypdf>=5.0,<6",
+    "sentence-transformers>=5.0,<7",
+    "streamlit>=1.40,<2",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0,<9",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
