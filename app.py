@@ -1,9 +1,10 @@
-"""Streamlit interface for PDF extraction, chunking, and embeddings."""
+"""Streamlit interface for local PDF retrieval and answer generation."""
 
 import streamlit as st
 
 from src.rag_project.chunker import chunk_pdf_pages
 from src.rag_project.embeddings import embed_chunks, load_embedding_model
+from src.rag_project.generator import OllamaError, generate_grounded_answer
 from src.rag_project.pdf_loader import extract_pdf_pages
 from src.rag_project.search import semantic_search
 
@@ -17,7 +18,7 @@ def get_embedding_model():
 st.set_page_config(page_title="Local PDF Q&A", page_icon="📄")
 
 st.title("Local PDF Q&A")
-st.caption("Version 1 · Step 4: search PDF passages by meaning")
+st.caption("Version 1 · Step 5: answer questions with local PDF evidence")
 
 uploaded_file = st.file_uploader(
     "Choose one PDF",
@@ -78,14 +79,14 @@ with st.expander("What does one embedding look like?"):
         str([round(value, 4) for value in embedded_chunks[0].embedding[:8]])
     )
 
-st.subheader("Search the PDF")
+st.subheader("Ask the PDF")
 
 with st.form("semantic_search_form"):
     question = st.text_input(
         "Ask a question about this document",
         placeholder="For example: What programming languages are mentioned?",
     )
-    search_submitted = st.form_submit_button("Find relevant passages")
+    search_submitted = st.form_submit_button("Generate answer")
 
 if search_submitted:
     try:
@@ -93,13 +94,25 @@ if search_submitted:
     except ValueError as error:
         st.warning(str(error))
     else:
-        st.write("The three passages with meanings closest to your question:")
+        with st.spinner("Llama 3.2 is writing an evidence-grounded answer..."):
+            try:
+                answer = generate_grounded_answer(question, results)
+            except (OllamaError, ValueError) as error:
+                st.error(str(error))
+            else:
+                st.subheader("Answer")
+                st.markdown(answer)
+
+        st.subheader("Evidence used")
+        st.caption(
+            "These are the three passages retrieved before answer generation."
+        )
 
         for rank, result in enumerate(results, start=1):
             chunk = result.embedded_chunk.chunk
             with st.container(border=True):
                 st.markdown(
-                    f"**{rank}. {chunk.document_name} — page "
+                    f"**Source {rank}: {chunk.document_name} — page "
                     f"{chunk.page_number}, chunk {chunk.chunk_number}**"
                 )
                 st.caption(f"Cosine similarity: {result.score:.3f}")

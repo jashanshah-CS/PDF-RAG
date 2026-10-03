@@ -14,6 +14,8 @@ tested before the next feature is added.
 - Create a normalized 384-dimensional embedding for every chunk
 - Search for the three chunks most relevant to a natural-language question
 - Show similarity scores and page-level source information
+- Generate an evidence-grounded answer with local Llama 3.2 through Ollama
+- Cite numbered sources and refuse questions unsupported by the retrieved text
 - Preview original pages, chunks, and a sample embedding
 - Process documents locally on the computer
 
@@ -33,9 +35,13 @@ Page-by-page text extraction
 384-dimensional local embeddings
     ↓
 Question embedding and cosine-similarity search
+    ↓
+Top three evidence chunks
+    ↓
+Local Llama 3.2 answer with source labels
 ```
 
-Answer generation is the next stage.
+Evaluation against prepared questions is the next stage.
 
 ## Requirements
 
@@ -69,16 +75,17 @@ uv run pytest -q
 - [x] Split pages into overlapping chunks
 - [x] Create embeddings locally
 - [x] Retrieve the chunks most relevant to a question
-- [ ] Generate an answer using only retrieved evidence
-- [ ] Display filename and page citations
+- [x] Generate an answer using only retrieved evidence
+- [x] Display filename and page citations
 - [ ] Evaluate with 15–20 prepared questions
 
 ## Limitations
 
 - Scanned or image-only PDFs are not supported yet because they require OCR.
 - The current embedding model is intended primarily for English text.
-- The app does not answer questions yet; retrieval and generation are still on
-  the roadmap.
+- Answer quality depends on whether semantic search retrieves the right passage.
+- A small local model can still make mistakes, so the visible evidence and
+  citations should always be checked.
 - Uploaded documents are processed in memory and are not intentionally saved.
 
 ## Privacy and cost
