@@ -39,7 +39,12 @@ class EmbeddedChunk:
 def load_embedding_model() -> SentenceTransformer:
     """Load the free embedding model on the CPU and cache it locally."""
     MODEL_CACHE.mkdir(exist_ok=True)
-    return SentenceTransformer(MODEL_NAME, device="cpu", cache_folder=str(MODEL_CACHE))
+    return SentenceTransformer(
+        MODEL_NAME,
+        device="cpu",
+        cache_folder=str(MODEL_CACHE),
+        local_files_only=True,
+    )
 
 
 def embed_chunks(
@@ -64,4 +69,3 @@ def embed_chunks(
         )
         for chunk, vector in zip(chunks, vectors, strict=True)
     ]
-

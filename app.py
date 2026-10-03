@@ -5,9 +5,10 @@ import streamlit as st
 from src.rag_project.chunker import chunk_pdf_pages
 from src.rag_project.embeddings import embed_chunks, load_embedding_model
 from src.rag_project.pdf_loader import extract_pdf_pages
+from src.rag_project.search import semantic_search
 
 
-@st.cache_resource
+@st.cache_resource(show_spinner=False)
 def get_embedding_model():
     """Load the model once and reuse it across Streamlit reruns."""
     return load_embedding_model()
@@ -16,7 +17,7 @@ def get_embedding_model():
 st.set_page_config(page_title="Local PDF Q&A", page_icon="📄")
 
 st.title("Local PDF Q&A")
-st.caption("Version 1 · Step 3: turn PDF passages into local embeddings")
+st.caption("Version 1 · Step 4: search PDF passages by meaning")
 
 uploaded_file = st.file_uploader(
     "Choose one PDF",
@@ -45,7 +46,7 @@ if not pages:
 word_count = sum(len(page.text.split()) for page in pages)
 chunks = chunk_pdf_pages(pages)
 
-with st.spinner("Creating local embeddings (the first run downloads the model)..."):
+with st.spinner("Creating local embeddings..."):
     try:
         embedded_chunks = embed_chunks(chunks, get_embedding_model())
     except Exception as error:
@@ -76,6 +77,33 @@ with st.expander("What does one embedding look like?"):
     st.code(
         str([round(value, 4) for value in embedded_chunks[0].embedding[:8]])
     )
+
+st.subheader("Search the PDF")
+
+with st.form("semantic_search_form"):
+    question = st.text_input(
+        "Ask a question about this document",
+        placeholder="For example: What programming languages are mentioned?",
+    )
+    search_submitted = st.form_submit_button("Find relevant passages")
+
+if search_submitted:
+    try:
+        results = semantic_search(question, embedded_chunks, get_embedding_model())
+    except ValueError as error:
+        st.warning(str(error))
+    else:
+        st.write("The three passages with meanings closest to your question:")
+
+        for rank, result in enumerate(results, start=1):
+            chunk = result.embedded_chunk.chunk
+            with st.container(border=True):
+                st.markdown(
+                    f"**{rank}. {chunk.document_name} — page "
+                    f"{chunk.page_number}, chunk {chunk.chunk_number}**"
+                )
+                st.caption(f"Cosine similarity: {result.score:.3f}")
+                st.write(chunk.text)
 
 st.subheader("Chunk preview")
 

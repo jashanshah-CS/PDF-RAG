@@ -12,6 +12,8 @@ tested before the next feature is added.
 - Extract text while retaining the filename and page number
 - Split pages into chunks of up to 150 words with a 30-word overlap
 - Create a normalized 384-dimensional embedding for every chunk
+- Search for the three chunks most relevant to a natural-language question
+- Show similarity scores and page-level source information
 - Preview original pages, chunks, and a sample embedding
 - Process documents locally on the computer
 
@@ -29,9 +31,11 @@ Page-by-page text extraction
 150-word chunks with 30-word overlap
     ↓
 384-dimensional local embeddings
+    ↓
+Question embedding and cosine-similarity search
 ```
 
-Semantic search and answer generation are the next stages.
+Answer generation is the next stage.
 
 ## Requirements
 
@@ -64,7 +68,7 @@ uv run pytest -q
 - [x] Upload and extract one PDF
 - [x] Split pages into overlapping chunks
 - [x] Create embeddings locally
-- [ ] Retrieve the chunks most relevant to a question
+- [x] Retrieve the chunks most relevant to a question
 - [ ] Generate an answer using only retrieved evidence
 - [ ] Display filename and page citations
 - [ ] Evaluate with 15–20 prepared questions
@@ -82,4 +86,3 @@ uv run pytest -q
 The current pipeline runs locally and uses free, open-source software. Uploaded
 PDFs and the downloaded model are excluded from Git. A hosted model API or paid
 cloud deployment may be added later, but neither is required for Version 1.
-
