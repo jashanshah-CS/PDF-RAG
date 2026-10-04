@@ -15,7 +15,8 @@ tested before the next feature is added.
 - Search for the three chunks most relevant to a natural-language question
 - Show similarity scores and page-level source information
 - Generate an evidence-grounded answer with local Llama 3.2 through Ollama
-- Cite numbered sources and refuse questions unsupported by the retrieved text
+- Validate structured model output and render citations programmatically
+- Refuse questions unsupported by the retrieved text
 - Evaluate retrieval, answers, citations, refusals, and response time from CSV
 - Preview original pages, chunks, and a sample embedding
 - Process documents locally on the computer
@@ -90,6 +91,13 @@ uv run python evaluate.py --pdf "C:\path\to\document.pdf"
 
 The report is written to `evaluation/results.csv`. Local questions, results,
 and PDFs are ignored by Git so private evaluation material is not published.
+
+To compare another installed Ollama model without changing the code:
+
+```powershell
+$env:OLLAMA_MODEL = "gemma4:latest"
+uv run python evaluate.py --pdf "C:\path\to\document.pdf" --output "evaluation/results-gemma4.csv"
+```
 
 ## Version 1 roadmap
 

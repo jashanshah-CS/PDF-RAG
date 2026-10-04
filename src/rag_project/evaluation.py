@@ -121,14 +121,20 @@ def evaluate_case(
     """Run one question and calculate deterministic quality checks."""
     started = perf_counter()
 
+    results: list[SearchResult] = []
+    answer = ""
+    error = ""
+
     try:
         results = semantic_search(case.question, embedded_chunks, model)
-        answer = answer_question(case.question, results)
-        error = ""
     except Exception as exception:
-        results = []
-        answer = ""
         error = str(exception)
+
+    if not error:
+        try:
+            answer = answer_question(case.question, results)
+        except Exception as exception:
+            error = str(exception)
 
     elapsed = perf_counter() - started
     retrieved = sorted(
@@ -185,4 +191,3 @@ def write_results(path: Path, results: list[EvaluationResult]) -> None:
         writer = csv.DictWriter(file, fieldnames=list(rows[0]))
         writer.writeheader()
         writer.writerows(rows)
-

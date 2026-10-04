@@ -82,3 +82,22 @@ def test_unsupported_case_passes_when_model_refuses() -> None:
     assert result.refusal_detected is True
     assert result.refusal_correct is True
     assert result.passed is True
+
+
+def test_generation_error_preserves_retrieval_result() -> None:
+    case = EvaluationCase("How much leave?", ("25 days",), 4, False)
+
+    def fail_generation(question, results):
+        raise RuntimeError("model response failed")
+
+    result = evaluate_case(
+        case,
+        [embedded("Annual leave is 25 days.", 4)],
+        QueryModel(),
+        answer_question=fail_generation,
+    )
+
+    assert result.retrieved_pages == "4"
+    assert result.retrieval_hit is True
+    assert result.error == "model response failed"
+    assert result.passed is False
