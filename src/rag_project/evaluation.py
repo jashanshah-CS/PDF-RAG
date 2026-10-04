@@ -8,7 +8,7 @@ import re
 from time import perf_counter
 
 from src.rag_project.embeddings import EmbeddedChunk, TextEncoder
-from src.rag_project.generator import generate_grounded_answer
+from src.rag_project.generator import generate_grounded_answer, is_refusal_answer
 from src.rag_project.search import SearchResult, semantic_search
 
 
@@ -110,6 +110,12 @@ def cited_pages(answer: str, results: list[SearchResult]) -> list[int]:
     )
 
 
+def normalize_for_keyword_check(text: str) -> str:
+    """Normalize punctuation so equivalent forms such as multi-tenant match."""
+    normalized = re.sub(r"[^a-z0-9+%]+", " ", text.lower())
+    return " ".join(normalized.split())
+
+
 def evaluate_case(
     case: EvaluationCase,
     embedded_chunks: list[EmbeddedChunk],
@@ -142,14 +148,18 @@ def evaluate_case(
     )
     cited = cited_pages(answer, results)
     answer_lower = answer.lower()
-    refusal_detected = "cannot find" in answer_lower
+    normalized_answer = normalize_for_keyword_check(answer)
+    refusal_detected = is_refusal_answer(answer)
     refusal_correct = refusal_detected == case.should_refuse
 
     retrieval_hit = (
         case.expected_page in retrieved if case.expected_page is not None else None
     )
     keyword_hit = (
-        all(keyword.lower() in answer_lower for keyword in case.expected_keywords)
+        all(
+            normalize_for_keyword_check(keyword) in normalized_answer
+            for keyword in case.expected_keywords
+        )
         if case.expected_keywords
         else None
     )

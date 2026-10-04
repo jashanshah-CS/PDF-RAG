@@ -9,6 +9,7 @@ from src.rag_project.evaluation import (
     cited_pages,
     evaluate_case,
     load_evaluation_cases,
+    normalize_for_keyword_check,
 )
 from src.rag_project.search import SearchResult
 
@@ -101,3 +102,9 @@ def test_generation_error_preserves_retrieval_result() -> None:
     assert result.retrieval_hit is True
     assert result.error == "model response failed"
     assert result.passed is False
+
+
+def test_keyword_normalization_treats_hyphenated_forms_as_equivalent() -> None:
+    assert normalize_for_keyword_check("multi-tenant and third-party APIs") == (
+        "multi tenant and third party apis"
+    )

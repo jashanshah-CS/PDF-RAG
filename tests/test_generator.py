@@ -7,6 +7,7 @@ from src.rag_project.generator import (
     OllamaError,
     build_evidence,
     generate_grounded_answer,
+    is_refusal_answer,
     supporting_source,
 )
 from src.rag_project.search import SearchResult
@@ -90,3 +91,16 @@ def test_generation_rejects_answer_that_cannot_be_grounded() -> None:
                 "message": {"content": '{"answer":"Zebra quantum pineapple"}'}
             },
         )
+
+
+@pytest.mark.parametrize(
+    "answer",
+    [
+        "I cannot find this in the supplied document.",
+        "I could not find any information about that.",
+        "I do not find an explicit salary request.",
+        "There is no information about sports.",
+    ],
+)
+def test_recognizes_equivalent_refusal_phrases(answer: str) -> None:
+    assert is_refusal_answer(answer) is True

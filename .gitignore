@@ -20,7 +20,8 @@ uploads/
 *.pdf
 
 # Local evaluation inputs and generated reports
-evaluation/questions.csv
+evaluation/questions*.csv
+!evaluation/questions.example.csv
 evaluation/results*.csv
 
 # Editors and operating systems
