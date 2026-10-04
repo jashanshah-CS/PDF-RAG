@@ -108,3 +108,9 @@ def test_keyword_normalization_treats_hyphenated_forms_as_equivalent() -> None:
     assert normalize_for_keyword_check("multi-tenant and third-party APIs") == (
         "multi tenant and third party apis"
     )
+
+
+def test_keyword_normalization_treats_pound_symbol_as_gbp() -> None:
+    assert normalize_for_keyword_check("The allowance is £1,200.") == (
+        "the allowance is gbp 1 200"
+    )

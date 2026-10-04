@@ -112,7 +112,8 @@ def cited_pages(answer: str, results: list[SearchResult]) -> list[int]:
 
 def normalize_for_keyword_check(text: str) -> str:
     """Normalize punctuation so equivalent forms such as multi-tenant match."""
-    normalized = re.sub(r"[^a-z0-9+%]+", " ", text.lower())
+    normalized = text.lower().replace("£", " gbp ")
+    normalized = re.sub(r"[^a-z0-9+%]+", " ", normalized)
     return " ".join(normalized.split())
 
 

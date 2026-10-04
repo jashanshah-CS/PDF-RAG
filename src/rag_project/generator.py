@@ -12,7 +12,7 @@ from src.rag_project.search import SearchResult
 
 
 OLLAMA_CHAT_URL = "http://localhost:11434/api/chat"
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2:latest")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen3:8b")
 
 SYSTEM_PROMPT = """You are a document question-answering assistant.
 Use the factual content in the supplied PDF evidence to answer the question.
@@ -142,7 +142,7 @@ def request_ollama(payload: dict[str, Any]) -> dict[str, Any]:
     except (HTTPError, URLError, TimeoutError, json.JSONDecodeError) as error:
         raise OllamaError(
             "The local Ollama service did not respond. Make sure Ollama is "
-            "running and that llama3.2 is installed."
+            f"running and that {OLLAMA_MODEL} is installed."
         ) from error
 
 
@@ -151,7 +151,7 @@ def generate_grounded_answer(
     results: list[SearchResult],
     send_request: Callable[[dict[str, Any]], dict[str, Any]] = request_ollama,
 ) -> str:
-    """Ask Llama 3.2 to answer using only the retrieved PDF evidence."""
+    """Ask the configured Ollama model using only retrieved PDF evidence."""
     if not question.strip():
         raise ValueError("Enter a question before generating an answer.")
     if not results:
@@ -170,6 +170,7 @@ def generate_grounded_answer(
             },
         ],
         "stream": False,
+        "think": False,
         "format": ANSWER_SCHEMA,
         "options": {"temperature": 0.1, "num_predict": 400},
     }

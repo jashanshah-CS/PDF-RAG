@@ -4,7 +4,11 @@ import streamlit as st
 
 from src.rag_project.chunker import chunk_pdf_pages
 from src.rag_project.embeddings import embed_chunks, load_embedding_model
-from src.rag_project.generator import OllamaError, generate_grounded_answer
+from src.rag_project.generator import (
+    OLLAMA_MODEL,
+    OllamaError,
+    generate_grounded_answer,
+)
 from src.rag_project.pdf_loader import extract_pdf_pages
 from src.rag_project.search import semantic_search
 
@@ -94,7 +98,9 @@ if search_submitted:
     except ValueError as error:
         st.warning(str(error))
     else:
-        with st.spinner("Llama 3.2 is writing an evidence-grounded answer..."):
+        with st.spinner(
+            f"{OLLAMA_MODEL} is writing an evidence-grounded answer..."
+        ):
             try:
                 answer = generate_grounded_answer(question, results)
             except (OllamaError, ValueError) as error:

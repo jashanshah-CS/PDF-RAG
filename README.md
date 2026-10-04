@@ -13,8 +13,10 @@ tested before the next feature is added.
 - Split pages into chunks of up to 150 words with a 30-word overlap
 - Create a normalized 384-dimensional embedding for every chunk
 - Search for the three chunks most relevant to a natural-language question
+  using combined semantic similarity and exact-term matching
 - Show similarity scores and page-level source information
-- Generate an evidence-grounded answer with local Llama 3.2 through Ollama
+- Generate an evidence-grounded answer with local Qwen3 8B through Ollama
+- Support alternative Ollama chat models with reasoning disabled for fast document Q&A
 - Validate structured model output and render citations programmatically
 - Refuse questions unsupported by the retrieved text
 - Evaluate retrieval, answers, citations, refusals, and response time from CSV
@@ -36,11 +38,11 @@ Page-by-page text extraction
     ↓
 384-dimensional local embeddings
     ↓
-Question embedding and cosine-similarity search
+Hybrid semantic and exact-term search
     ↓
 Top three evidence chunks
     ↓
-Local Llama 3.2 answer with source labels
+Local Qwen3 8B answer with source labels
 ```
 
 Version 1 now includes a repeatable evaluation runner.
@@ -52,6 +54,12 @@ Version 1 now includes a repeatable evaluation runner.
 
 The project uses Python 3.12. `uv` can download a project-specific Python
 runtime automatically if Python is not already installed.
+
+Install the default local chat model before starting the app:
+
+```powershell
+ollama pull qwen3:8b
+```
 
 ## Run locally
 
@@ -92,12 +100,16 @@ uv run python evaluate.py --pdf "C:\path\to\document.pdf"
 The report is written to `evaluation/results.csv`. Local questions, results,
 and PDFs are ignored by Git so private evaluation material is not published.
 
-To compare another installed Ollama model without changing the code:
+To use another installed Ollama model without changing the code:
 
 ```powershell
-$env:OLLAMA_MODEL = "gemma4:latest"
-uv run python evaluate.py --pdf "C:\path\to\document.pdf" --output "evaluation/results-gemma4.csv"
+$env:OLLAMA_MODEL = "llama3.2:latest"
+uv run python evaluate.py --pdf "C:\path\to\document.pdf" --output "evaluation/results-llama32.csv"
 ```
+
+The chat request sets Ollama's `think` option to `false`. This avoids long
+reasoning traces for models such as Qwen3, where short evidence-based answers
+are more useful than extended internal reasoning.
 
 ## Version 1 roadmap
 

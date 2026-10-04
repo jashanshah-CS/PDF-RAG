@@ -57,3 +57,20 @@ def test_semantic_search_rejects_invalid_result_count() -> None:
 
 def test_semantic_search_returns_empty_list_when_there_are_no_chunks() -> None:
     assert semantic_search("holiday allowance", [], QueryModel()) == []
+
+
+def test_exact_policy_terms_break_close_semantic_ties() -> None:
+    class ExpenseQueryModel:
+        def encode(self, sentences, **kwargs):
+            return np.array([[1.0, 0.0]], dtype=np.float32)
+
+    chunks = [
+        embedded("Gifts must be declared within five working days.", (0.81, 0.0)),
+        embedded("Expense receipts must be submitted within 30 days.", (0.80, 0.0)),
+    ]
+
+    results = semantic_search(
+        "When must an expense receipt be submitted?", chunks, ExpenseQueryModel()
+    )
+
+    assert results[0].embedded_chunk.chunk.text.startswith("Expense receipts")

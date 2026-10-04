@@ -50,6 +50,7 @@ def test_generation_sends_grounded_non_streaming_chat_request() -> None:
     assert answer == "Employees receive 25 days. [Source 1]"
     assert captured_payload["model"] == OLLAMA_MODEL
     assert captured_payload["stream"] is False
+    assert captured_payload["think"] is False
     assert captured_payload["format"]["required"] == ["answer"]
     assert captured_payload["options"]["temperature"] == 0.1
     assert "outside knowledge" in captured_payload["messages"][0]["content"]
