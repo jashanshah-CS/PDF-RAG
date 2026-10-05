@@ -16,7 +16,10 @@ tested before the next feature is added.
 - Assign stable, content-based document identifiers and ingestion timestamps
 - Split pages into chunks of up to 150 words with a 30-word overlap
 - Create a normalized 384-dimensional embedding for every chunk
-- Search for the three chunks most relevant to a natural-language question
+- Persist chunks, embeddings, and citation metadata in local ChromaDB storage
+- Automatically reload indexed sources after restarting the application
+- Add, update, refresh, and remove saved PDF and website sources
+- Search for the five chunks most relevant to a natural-language question
   using combined semantic similarity and exact-term matching
 - Show similarity scores and page-level source information
 - Generate an evidence-grounded answer with local Qwen3 8B through Ollama
@@ -42,9 +45,11 @@ Source-neutral chunks with inherited metadata
     ↓
 384-dimensional local embeddings
     ↓
+Persistent ChromaDB index in data/chroma
+    ↓
 Hybrid semantic and exact-term search
     ↓
-Top three evidence chunks
+Top five evidence chunks
     ↓
 Local Qwen3 8B answer with source labels
 ```
@@ -129,6 +134,25 @@ The chat request sets Ollama's `think` option to `false`. This avoids long
 reasoning traces for models such as Qwen3, where short evidence-based answers
 are more useful than extended internal reasoning.
 
+## Local database
+
+Version 2 uses **ChromaDB** as an embedded vector database. It runs inside the
+Python application and does not require a separate database server or account.
+Its files are stored in `data/chroma-v2`, which is excluded from Git.
+
+For every searchable chunk, ChromaDB stores:
+
+- the extracted text;
+- its 384-dimensional MiniLM embedding;
+- the PDF filename and page number, or webpage title and URL;
+- the source type, ingestion time, and chunk number;
+- a management key used to update or remove the complete source.
+
+The original PDF file is not copied into ChromaDB. Re-uploading a PDF with the
+same filename replaces its existing chunks. Adding the same website start URL
+again recrawls its pages and replaces the previous crawl. The **Saved sources**
+section can remove either source type and all of its indexed chunks.
+
 ## Version 1 roadmap
 
 - [x] Upload and extract one PDF
@@ -148,6 +172,8 @@ are more useful than extended internal reasoning.
 - [x] Upload and search multiple PDFs together
 - [x] Ingest up to five linked pages from one approved public website
 - [x] Evaluate PDF, website, cross-source, and unsupported questions
+- [x] Persist embeddings and source metadata with local ChromaDB
+- [x] Reload, update, refresh, list, and remove indexed sources
 
 ## Limitations
 
@@ -159,10 +185,12 @@ are more useful than extended internal reasoning.
 - Answer quality depends on whether semantic search retrieves the right passage.
 - A small local model can still make mistakes, so the visible evidence and
   citations should always be checked.
-- Uploaded documents are processed in memory and are not intentionally saved.
+- Extracted PDF text and embeddings persist locally, but the original PDF file
+  is not retained. Refreshing a PDF therefore requires uploading it again.
 
 ## Privacy and cost
 
 The current pipeline runs locally and uses free, open-source software. Uploaded
-PDFs and the downloaded model are excluded from Git. A hosted model API or paid
-cloud deployment may be added later, but neither is required for Version 1.
+PDFs, the local ChromaDB index, and the downloaded model are excluded from Git.
+A hosted model API or paid cloud deployment may be added later, but neither is
+required for Version 2.

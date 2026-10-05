@@ -1,4 +1,6 @@
-"""Streamlit interface for local PDF retrieval and answer generation."""
+"""Streamlit interface for persistent local document retrieval and answers."""
+
+from dataclasses import replace
 
 import streamlit as st
 
@@ -12,6 +14,11 @@ from src.rag_project.generator import (
 from src.rag_project.pdf_loader import extract_pdf_files
 from src.rag_project.search import semantic_search
 from src.rag_project.website_loader import WebsiteLoadError, crawl_website
+from src.rag_project.vector_store import (
+    PersistentVectorStore,
+    pdf_source_key,
+    website_source_key,
+)
 
 
 @st.cache_resource(show_spinner=False)
@@ -20,10 +27,10 @@ def get_embedding_model():
     return load_embedding_model()
 
 
-@st.cache_data(show_spinner=False, ttl=3600)
-def get_website_documents(url: str):
-    """Load a bounded approved website once and reuse it across reruns."""
-    return crawl_website(url, max_pages=5)
+@st.cache_resource(show_spinner=False)
+def get_vector_store():
+    """Open the persistent local ChromaDB collection once per app process."""
+    return PersistentVectorStore()
 
 
 st.set_page_config(
@@ -149,9 +156,9 @@ with st.sidebar:
     st.markdown("**Pipeline**")
     st.markdown("① Add PDFs or a webpage")
     st.markdown("② Extract & chunk")
-    st.markdown("③ Hybrid search")
-    st.markdown("④ Generate answer")
-    st.markdown("⑤ Verify sources")
+    st.markdown("③ Save in local ChromaDB")
+    st.markdown("④ Hybrid search")
+    st.markdown("⑤ Generate & verify")
     st.divider()
     st.caption("ACTIVE MODEL")
     st.code(OLLAMA_MODEL, language=None)
@@ -177,30 +184,102 @@ with st.container(border=True):
             "Upload one or more text-based PDFs",
             type=["pdf"],
             accept_multiple_files=True,
-            help="PDFs are processed in memory and are not intentionally saved.",
+            help=(
+                "PDF text and embeddings are saved locally. Uploading a changed "
+                "PDF with the same filename replaces its previous index."
+            ),
+        )
+        index_pdfs = st.button(
+            "Add or update PDFs",
+            disabled=not uploaded_files,
+            use_container_width=True,
         )
     with website_tab:
         with st.form("website_source_form"):
             entered_website_url = st.text_input(
                 "Public webpage URL",
-                value=st.session_state.get("website_source_url", ""),
                 placeholder="https://example.com/benefits",
                 help="Loads this page and up to four linked pages on the same hostname.",
             )
-            website_submitted = st.form_submit_button("Add website pages")
+            website_submitted = st.form_submit_button("Add or refresh website")
 
-        if website_submitted:
-            st.session_state["website_source_url"] = entered_website_url.strip()
+store = get_vector_store()
 
-        website_url = st.session_state.get("website_source_url", "")
-        if website_url:
-            st.caption(f"Added website: {website_url}")
-            if st.button("Remove website", use_container_width=True):
-                st.session_state.pop("website_source_url", None)
+if index_pdfs and uploaded_files:
+    with st.spinner("Extracting, embedding, and saving PDFs locally..."):
+        try:
+            for uploaded_file in uploaded_files:
+                pdf_documents = extract_pdf_files(
+                    [(uploaded_file.name, uploaded_file.getvalue())]
+                )
+                if not pdf_documents:
+                    st.warning(f"No readable text was found in {uploaded_file.name}.")
+                    continue
+                pdf_chunks = chunk_documents(pdf_documents)
+                embedded_pdf_chunks = embed_chunks(
+                    pdf_chunks, get_embedding_model()
+                )
+                store.replace_source(
+                    pdf_source_key(uploaded_file.name), embedded_pdf_chunks
+                )
+            st.success("PDF index saved. It will remain available after restart.")
+        except Exception as error:
+            st.error(f"I could not index the uploaded PDFs: {error}")
+
+if website_submitted:
+    website_url = entered_website_url.strip()
+    if not website_url:
+        st.warning("Enter a public website URL first.")
+    else:
+        with st.spinner("Crawling, embedding, and saving website pages..."):
+            try:
+                website_documents = [
+                    replace(
+                        document,
+                        metadata={**document.metadata, "root_url": website_url},
+                    )
+                    for document in crawl_website(website_url, max_pages=5)
+                ]
+                website_chunks = chunk_documents(website_documents)
+                embedded_website_chunks = embed_chunks(
+                    website_chunks, get_embedding_model()
+                )
+                store.replace_source(
+                    website_source_key(website_url), embedded_website_chunks
+                )
+                st.success("Website index saved. Use the same URL to refresh it.")
+            except WebsiteLoadError as error:
+                st.error(f"I could not add that website: {error}")
+            except Exception as error:
+                st.error(f"I could not index that website: {error}")
+
+stored_sources = store.list_sources()
+if stored_sources:
+    st.markdown("#### Saved sources")
+    st.caption("These sources load automatically whenever the app starts.")
+    for source in stored_sources:
+        details = (
+            f"{source.location_count} locations · {source.chunk_count} chunks · "
+            f"added {source.added_at.astimezone().strftime('%d %b %Y %H:%M')}"
+        )
+        source_col, remove_col = st.columns([5, 1])
+        with source_col:
+            icon = "🌐" if source.root_url else "📄"
+            st.markdown(f"{icon} **{source.source_name}**")
+            st.caption(source.root_url or details)
+            if source.root_url:
+                st.caption(details)
+        with remove_col:
+            if st.button(
+                "Remove",
+                key=f"remove-{source.source_key}",
+                use_container_width=True,
+            ):
+                store.delete_source(source.source_key)
                 st.rerun()
 
-website_url = st.session_state.get("website_source_url", "")
-if not uploaded_files and not website_url:
+embedded_chunks = store.load_all()
+if not embedded_chunks:
     st.info("Upload PDFs or add a public webpage to begin.", icon="↗️")
     starter_1, starter_2, starter_3 = st.columns(3)
     with starter_1:
@@ -214,58 +293,25 @@ if not uploaded_files and not website_url:
     with starter_3:
         with st.container(border=True):
             st.markdown("#### Easy to inspect")
-            st.caption("Open retrieved chunks and extracted source text at any time.")
+            st.caption("Saved sources return automatically after an app restart.")
     st.stop()
 
-documents = []
-try:
-    if uploaded_files:
-        documents.extend(
-            extract_pdf_files(
-                (uploaded_file.name, uploaded_file.getvalue())
-                for uploaded_file in uploaded_files
-            )
-        )
-except Exception as error:
-    st.error(f"I could not read the uploaded PDFs: {error}")
-    st.stop()
-
-if website_url:
-    with st.spinner("Discovering and extracting up to five approved website pages..."):
-        try:
-            documents.extend(get_website_documents(website_url))
-        except WebsiteLoadError as error:
-            st.error(f"I could not add that website: {error}")
-            st.stop()
-
-if not documents:
-    st.warning(
-        "No readable text was found. Uploaded files may be scanned PDFs; "
-        "image-based PDFs will need OCR in a later step."
-    )
-    st.stop()
-
-word_count = sum(len(document.text.split()) for document in documents)
-chunks = chunk_documents(documents)
-
-with st.spinner("Creating local embeddings..."):
-    try:
-        embedded_chunks = embed_chunks(chunks, get_embedding_model())
-    except Exception as error:
-        st.error(f"I could not create embeddings: {error}")
-        st.stop()
+chunks = [item.chunk for item in embedded_chunks]
+word_count = sum(len(chunk.text.split()) for chunk in chunks)
 
 embedding_dimensions = (
     len(embedded_chunks[0].embedding) if embedded_chunks else 0
 )
-source_count = len({document.document_id for document in documents})
+source_count = len(stored_sources)
 pdf_page_count = sum(
-    document.location.page_number is not None for document in documents
+    source.location_count
+    for source in stored_sources
+    if source.source_type.value == "pdf"
 )
 website_pages = {
-    document.location.url
-    for document in documents
-    if document.location.url is not None
+    chunk.location.url
+    for chunk in chunks
+    if chunk.location.url is not None
 }
 
 st.markdown('<div class="section-label">02 · Documents ready</div>', unsafe_allow_html=True)
@@ -278,7 +324,7 @@ col5.metric("Embedding dimensions", embedding_dimensions)
 
 label = "source" if source_count == 1 else "sources"
 st.success(
-    f"{source_count} {label} indexed successfully and ready for questions.",
+    f"{source_count} saved {label} loaded from local ChromaDB and ready for questions.",
     icon="✅",
 )
 if website_pages:
@@ -330,7 +376,7 @@ if search_submitted:
         st.markdown('<div class="section-label">Evidence</div>', unsafe_allow_html=True)
         st.subheader("Sources used for this answer")
         st.caption(
-            "These are the three passages retrieved before answer generation."
+            "These are the five passages retrieved before answer generation."
         )
 
         for rank, result in enumerate(results, start=1):
@@ -348,20 +394,10 @@ if search_submitted:
 st.markdown('<div class="section-label">04 · Inspect</div>', unsafe_allow_html=True)
 st.subheader("Document details")
 
-chunk_tab, page_tab = st.tabs(["Searchable chunks", "Extracted source text"])
-
-with chunk_tab:
-    for chunk in chunks:
-        with st.expander(
-            f"{chunk.location.label().title()} · chunk {chunk.chunk_number}"
-        ):
-            st.write(chunk.text)
-
-with page_tab:
-    for document in documents:
-        with st.expander(
-            f"{document.location.label()} · {document.source_name}"
-        ):
-            st.text(document.text)
-            if document.location.url:
-                st.link_button("Open original webpage", document.location.url)
+for chunk in chunks:
+    with st.expander(
+        f"{chunk.source_name} · {chunk.location.label()} · chunk {chunk.chunk_number}"
+    ):
+        st.write(chunk.text)
+        if chunk.location.url:
+            st.link_button("Open original webpage", chunk.location.url)
