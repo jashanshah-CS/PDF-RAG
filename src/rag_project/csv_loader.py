@@ -329,32 +329,6 @@ def answer_csv_question(
                 tuple(_citation(table, index) for index in range(len(table.rows))),
             )
 
-    list_request = any(
-        re.search(rf"\b{re.escape(phrase)}\b", normalized_question)
-        for phrase in ("all", "list", "what are", "which are", "give me")
-    )
-    listed_column = next(
-        (column for column in mentioned if column in entity_columns),
-        None,
-    )
-    if list_request and listed_column:
-        column_index = table.columns.index(listed_column)
-        unique_values: list[str] = []
-        supporting_rows: list[int] = []
-        seen_values: set[str] = set()
-        for row_index, row in enumerate(table.rows):
-            value = row[column_index]
-            normalized_value = _normalize(value)
-            if value and normalized_value not in seen_values:
-                seen_values.add(normalized_value)
-                unique_values.append(value)
-                supporting_rows.append(row_index)
-        if unique_values:
-            return StructuredCsvAnswer(
-                f"The {listed_column} values are: " + ", ".join(unique_values) + ".",
-                tuple(_citation(table, index) for index in supporting_rows),
-            )
-
     target_columns = [column for column in mentioned if column != entity_column]
     for row_index, row in enumerate(table.rows):
         values = table.row_dict(row_index)
