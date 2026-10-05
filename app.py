@@ -3,12 +3,6 @@
 import streamlit as st
 
 from src.rag_project.chunker import chunk_documents
-from src.rag_project.csv_loader import (
-    CsvLoadError,
-    answer_csv_question,
-    load_csv_file,
-    looks_like_csv_calculation,
-)
 from src.rag_project.embeddings import embed_chunks, load_embedding_model
 from src.rag_project.generator import (
     OLLAMA_MODEL,
@@ -33,7 +27,7 @@ def get_website_documents(url: str):
 
 
 st.set_page_config(
-    page_title="Local Source AI",
+    page_title="Local PDF AI",
     page_icon="✦",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -149,11 +143,11 @@ st.markdown(
 )
 
 with st.sidebar:
-    st.markdown("## ✦ Local Source AI")
+    st.markdown("## ✦ Local PDF AI")
     st.caption("PRIVATE DOCUMENT Q&A")
     st.divider()
     st.markdown("**Pipeline**")
-    st.markdown("① Add PDFs, website, or CSV")
+    st.markdown("① Add PDFs or a webpage")
     st.markdown("② Extract & chunk")
     st.markdown("③ Hybrid search")
     st.markdown("④ Generate answer")
@@ -168,7 +162,7 @@ st.markdown(
     <div class="hero">
         <div class="hero-kicker">Version 2 · Unified sources</div>
         <h1>Ask your sources. Verify every answer.</h1>
-        <p>Search PDFs, approved webpages, and CSV data together, with precise source evidence.</p>
+        <p>Search PDFs and an approved webpage together, with answers backed by precise source evidence.</p>
         <span class="privacy-pill">● 100% local processing</span>
     </div>
     """,
@@ -177,7 +171,7 @@ st.markdown(
 
 st.markdown('<div class="section-label">01 · Sources</div>', unsafe_allow_html=True)
 with st.container(border=True):
-    pdf_tab, website_tab, csv_tab = st.tabs(["PDF documents", "Website", "CSV data"])
+    pdf_tab, website_tab = st.tabs(["PDF documents", "Website"])
     with pdf_tab:
         uploaded_files = st.file_uploader(
             "Upload one or more text-based PDFs",
@@ -204,18 +198,10 @@ with st.container(border=True):
             if st.button("Remove website", use_container_width=True):
                 st.session_state.pop("website_source_url", None)
                 st.rerun()
-    with csv_tab:
-        uploaded_csv = st.file_uploader(
-            "Upload one UTF-8 CSV file",
-            type=["csv"],
-            accept_multiple_files=False,
-            help="CSV files are validated and limited to 2 MB and 10,000 rows.",
-            key="csv_source_uploader",
-        )
 
 website_url = st.session_state.get("website_source_url", "")
-if not uploaded_files and not website_url and uploaded_csv is None:
-    st.info("Upload PDFs or CSV data, or add a public webpage to begin.", icon="↗️")
+if not uploaded_files and not website_url:
+    st.info("Upload PDFs or add a public webpage to begin.", icon="↗️")
     starter_1, starter_2, starter_3 = st.columns(3)
     with starter_1:
         with st.container(border=True):
@@ -232,7 +218,6 @@ if not uploaded_files and not website_url and uploaded_csv is None:
     st.stop()
 
 documents = []
-csv_tables = []
 try:
     if uploaded_files:
         documents.extend(
@@ -244,15 +229,6 @@ try:
 except Exception as error:
     st.error(f"I could not read the uploaded PDFs: {error}")
     st.stop()
-
-if uploaded_csv is not None:
-    try:
-        csv_table = load_csv_file(uploaded_csv.getvalue(), uploaded_csv.name)
-    except CsvLoadError as error:
-        st.error(f"I could not read the uploaded CSV: {error}")
-        st.stop()
-    csv_tables.append(csv_table)
-    documents.extend(csv_table.to_documents())
 
 if website_url:
     with st.spinner("Discovering and extracting up to five approved website pages..."):
@@ -279,6 +255,9 @@ with st.spinner("Creating local embeddings..."):
         st.error(f"I could not create embeddings: {error}")
         st.stop()
 
+embedding_dimensions = (
+    len(embedded_chunks[0].embedding) if embedded_chunks else 0
+)
 source_count = len({document.document_id for document in documents})
 pdf_page_count = sum(
     document.location.page_number is not None for document in documents
@@ -288,15 +267,14 @@ website_pages = {
     for document in documents
     if document.location.url is not None
 }
-csv_row_count = sum(len(table.rows) for table in csv_tables)
 
 st.markdown('<div class="section-label">02 · Documents ready</div>', unsafe_allow_html=True)
 col1, col2, col3, col4, col5 = st.columns(5)
 col1.metric("Sources", source_count)
 col2.metric("PDF pages", pdf_page_count)
-col3.metric("CSV rows", csv_row_count)
-col4.metric("Approximate words", f"{word_count:,}")
-col5.metric("Searchable chunks", len(chunks))
+col3.metric("Approximate words", f"{word_count:,}")
+col4.metric("Searchable chunks", len(chunks))
+col5.metric("Embedding dimensions", embedding_dimensions)
 
 label = "source" if source_count == 1 else "sources"
 st.success(
@@ -307,9 +285,6 @@ if website_pages:
     with st.expander(f"Website pages indexed ({len(website_pages)})"):
         for page_url in sorted(website_pages):
             st.markdown(f"- [{page_url}]({page_url})")
-if csv_tables:
-    with st.expander(f"CSV preview · {csv_tables[0].source_name}"):
-        st.dataframe(csv_tables[0].preview(), use_container_width=True)
 
 with st.expander("Behind the scenes: chunks and embeddings"):
     st.write(
@@ -332,41 +307,14 @@ with st.form("semantic_search_form"):
         "Ask a question about these sources",
         placeholder="For example: What is the annual leave policy?",
     )
-    search_submitted = st.form_submit_button("Ask your sources  →")
+    search_submitted = st.form_submit_button("Ask with Qwen3 8B  →")
 
 if search_submitted:
-    structured_answer = answer_csv_question(question, csv_tables)
-    if structured_answer is not None:
-        st.markdown('<div class="section-label">Answer</div>', unsafe_allow_html=True)
-        with st.container(border=True):
-            st.markdown(f"### {structured_answer.answer}")
-            st.caption("Calculated directly from the CSV; no language model arithmetic used.")
-
-        st.markdown('<div class="section-label">Evidence</div>', unsafe_allow_html=True)
-        st.subheader("CSV rows used for this answer")
-        visible_citations = structured_answer.citations[:25]
-        for citation in visible_citations:
-            with st.container(border=True):
-                st.markdown(f"**{citation.label()}**")
-                st.write(citation.values)
-        hidden_count = len(structured_answer.citations) - len(visible_citations)
-        if hidden_count:
-            st.caption(f"{hidden_count:,} additional contributing rows are not displayed.")
-    elif csv_tables and looks_like_csv_calculation(question):
-        st.warning(
-            "I recognized this as a CSV calculation but could not map it safely. "
-            "Use the exact column names shown in the CSV preview."
-        )
+    try:
+        results = semantic_search(question, embedded_chunks, get_embedding_model())
+    except ValueError as error:
+        st.warning(str(error))
     else:
-        try:
-            results = semantic_search(question, embedded_chunks, get_embedding_model())
-        except ValueError as error:
-            st.warning(str(error))
-            results = []
-
-    if structured_answer is None and not (
-        csv_tables and looks_like_csv_calculation(question)
-    ) and results:
         with st.spinner(
             f"{OLLAMA_MODEL} is writing an evidence-grounded answer..."
         ):

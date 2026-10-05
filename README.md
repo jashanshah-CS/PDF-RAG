@@ -11,9 +11,6 @@ tested before the next feature is added.
 - Upload and search one or more text-based PDFs through a Streamlit interface
 - Add up to five linked pages from one approved public website and search them
   alongside uploaded PDFs
-- Upload one UTF-8 CSV file with row-level citations and a data preview
-- Calculate CSV totals, averages, counts, filtering, lookups, and min/max
-  comparisons with deterministic table operations
 - Extract text while retaining the filename and page number
 - Represent extracted content with a source-neutral document model
 - Assign stable, content-based document identifiers and ingestion timestamps
@@ -37,7 +34,7 @@ It is downloaded once and stored in the local `.model-cache` directory.
 ## How it currently works
 
 ```text
-PDF uploads, approved webpages, and CSV data
+PDF uploads and approved webpage
     ↓
 Unified documents with source metadata
     ↓
@@ -55,8 +52,7 @@ Local Qwen3 8B answer with source labels
 Version 2 starts from the tested Version 1 pipeline. Its unified document and
 chunk models are the foundation for multiple PDFs, approved webpages, and CSV
 sources. The current interface can search multiple PDFs and up to five linked
-pages from one approved public website together. CSV rows join the same search
-index, while numerical questions use exact table operations.
+pages from one approved public website together.
 
 ## Requirements
 
@@ -140,7 +136,7 @@ are more useful than extended internal reasoning.
 - [x] Make embeddings, retrieval, generation, citations, and evaluation source-neutral
 - [x] Upload and search multiple PDFs together
 - [x] Ingest up to five linked pages from one approved public website
-- [x] Ingest CSV data and use structured querying for calculations
+- [ ] Ingest CSV data and use structured querying for calculations
 - [ ] Evaluate PDF, website, CSV, cross-source, and unsupported questions
 
 ## Limitations
@@ -149,8 +145,6 @@ are more useful than extended internal reasoning.
 - Website ingestion supports static HTML only and does not execute JavaScript.
 - Website discovery follows only same-hostname HTML links and stops after five
   unique pages.
-- CSV ingestion currently supports one UTF-8 file with at most 10,000 rows and
-  requires calculation questions to use recognizable column names.
 - The current embedding model is intended primarily for English text.
 - Answer quality depends on whether semantic search retrieves the right passage.
 - A small local model can still make mistakes, so the visible evidence and
