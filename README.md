@@ -50,9 +50,9 @@ Local Qwen3 8B answer with source labels
 ```
 
 Version 2 starts from the tested Version 1 pipeline. Its unified document and
-chunk models are the foundation for multiple PDFs, approved webpages, and CSV
-sources. The current interface can search multiple PDFs and up to five linked
-pages from one approved public website together.
+chunk models support multiple PDFs and approved webpages. The current interface
+can search multiple PDFs and up to five linked pages from one approved public
+website together.
 
 ## Requirements
 
@@ -136,8 +136,7 @@ are more useful than extended internal reasoning.
 - [x] Make embeddings, retrieval, generation, citations, and evaluation source-neutral
 - [x] Upload and search multiple PDFs together
 - [x] Ingest up to five linked pages from one approved public website
-- [ ] Ingest CSV data and use structured querying for calculations
-- [ ] Evaluate PDF, website, CSV, cross-source, and unsupported questions
+- [ ] Evaluate PDF, website, cross-source, and unsupported questions
 
 ## Limitations
 

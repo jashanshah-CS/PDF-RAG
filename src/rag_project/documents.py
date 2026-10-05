@@ -12,7 +12,6 @@ class SourceType(StrEnum):
 
     PDF = "pdf"
     WEBSITE = "website"
-    CSV = "csv"
 
 
 @dataclass(frozen=True)
