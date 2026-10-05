@@ -1,8 +1,9 @@
 from pathlib import Path
+from datetime import UTC, datetime
 
 import numpy as np
 
-from src.rag_project.chunker import PdfChunk
+from src.rag_project.documents import DocumentChunk, SourceLocation, SourceType
 from src.rag_project.embeddings import EmbeddedChunk
 from src.rag_project.evaluation import (
     EvaluationCase,
@@ -20,7 +21,16 @@ class QueryModel:
 
 
 def embedded(text: str, page: int, vector=(1.0, 0.0)) -> EmbeddedChunk:
-    return EmbeddedChunk(PdfChunk("handbook.pdf", page, 1, text), vector)
+    chunk = DocumentChunk(
+        document_id="pdf-handbook",
+        source_type=SourceType.PDF,
+        source_name="handbook.pdf",
+        chunk_number=1,
+        text=text,
+        location=SourceLocation(page_number=page),
+        added_at=datetime(2026, 10, 5, tzinfo=UTC),
+    )
+    return EmbeddedChunk(chunk, vector)
 
 
 def test_loads_csv_case_fields(tmp_path: Path) -> None:

@@ -1,4 +1,4 @@
-"""Create local semantic embeddings for PDF chunks."""
+"""Create local semantic embeddings for source-neutral document chunks."""
 
 from dataclasses import dataclass
 from pathlib import Path
@@ -8,7 +8,7 @@ import numpy as np
 from numpy.typing import NDArray
 from sentence_transformers import SentenceTransformer
 
-from src.rag_project.chunker import PdfChunk
+from src.rag_project.documents import DocumentChunk
 
 
 MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
@@ -30,9 +30,9 @@ class TextEncoder(Protocol):
 
 @dataclass(frozen=True)
 class EmbeddedChunk:
-    """A PDF chunk paired with its numerical meaning representation."""
+    """A document chunk paired with its numerical meaning representation."""
 
-    chunk: PdfChunk
+    chunk: DocumentChunk
     embedding: tuple[float, ...]
 
 
@@ -48,7 +48,7 @@ def load_embedding_model() -> SentenceTransformer:
 
 
 def embed_chunks(
-    chunks: list[PdfChunk],
+    chunks: list[DocumentChunk],
     model: TextEncoder,
 ) -> list[EmbeddedChunk]:
     """Create one normalized embedding for every chunk."""

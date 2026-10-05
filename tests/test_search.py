@@ -1,7 +1,8 @@
 import numpy as np
 import pytest
+from datetime import UTC, datetime
 
-from src.rag_project.chunker import PdfChunk
+from src.rag_project.documents import DocumentChunk, SourceLocation, SourceType
 from src.rag_project.embeddings import EmbeddedChunk
 from src.rag_project.search import semantic_search
 
@@ -24,7 +25,15 @@ class QueryModel:
 
 def embedded(text: str, vector: tuple[float, ...]) -> EmbeddedChunk:
     return EmbeddedChunk(
-        chunk=PdfChunk("handbook.pdf", 1, 1, text),
+        chunk=DocumentChunk(
+            document_id="pdf-handbook",
+            source_type=SourceType.PDF,
+            source_name="handbook.pdf",
+            chunk_number=1,
+            text=text,
+            location=SourceLocation(page_number=1),
+            added_at=datetime(2026, 10, 5, tzinfo=UTC),
+        ),
         embedding=vector,
     )
 

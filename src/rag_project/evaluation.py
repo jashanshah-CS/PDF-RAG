@@ -101,13 +101,12 @@ def cited_pages(answer: str, results: list[SearchResult]) -> list[int]:
     source_numbers = {
         int(match) for match in re.findall(r"\[Source\s+(\d+)\]", answer, re.I)
     }
-    return sorted(
-        {
-            results[number - 1].embedded_chunk.chunk.page_number
-            for number in source_numbers
-            if 1 <= number <= len(results)
-        }
-    )
+    pages = {
+        results[number - 1].embedded_chunk.chunk.location.page_number
+        for number in source_numbers
+        if 1 <= number <= len(results)
+    }
+    return sorted(page for page in pages if page is not None)
 
 
 def normalize_for_keyword_check(text: str) -> str:
@@ -145,7 +144,11 @@ def evaluate_case(
 
     elapsed = perf_counter() - started
     retrieved = sorted(
-        {result.embedded_chunk.chunk.page_number for result in results}
+        page
+        for page in {
+            result.embedded_chunk.chunk.location.page_number for result in results
+        }
+        if page is not None
     )
     cited = cited_pages(answer, results)
     answer_lower = answer.lower()

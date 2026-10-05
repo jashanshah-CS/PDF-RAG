@@ -2,7 +2,7 @@
 
 import streamlit as st
 
-from src.rag_project.chunker import chunk_pdf_pages
+from src.rag_project.chunker import chunk_documents
 from src.rag_project.embeddings import embed_chunks, load_embedding_model
 from src.rag_project.generator import (
     OLLAMA_MODEL,
@@ -153,7 +153,7 @@ with st.sidebar:
 st.markdown(
     """
     <div class="hero">
-        <div class="hero-kicker">Version 1 · Local RAG</div>
+        <div class="hero-kicker">Version 2 · Unified sources</div>
         <h1>Ask your PDF. Verify every answer.</h1>
         <p>Search a document with local embeddings and get concise answers backed by page-level evidence.</p>
         <span class="privacy-pill">● 100% local processing</span>
@@ -202,7 +202,7 @@ if not pages:
     st.stop()
 
 word_count = sum(len(page.text.split()) for page in pages)
-chunks = chunk_pdf_pages(pages)
+chunks = chunk_documents(pages)
 
 with st.spinner("Creating local embeddings..."):
     try:
@@ -275,8 +275,8 @@ if search_submitted:
             chunk = result.embedded_chunk.chunk
             with st.container(border=True):
                 st.markdown(
-                    f"**Source {rank}: {chunk.document_name} — page "
-                    f"{chunk.page_number}, chunk {chunk.chunk_number}**"
+                    f"**Source {rank}: {chunk.citation_label()}, "
+                    f"chunk {chunk.chunk_number}**"
                 )
                 st.caption(f"Semantic similarity · {result.score:.3f}")
                 st.write(chunk.text)
@@ -289,11 +289,13 @@ chunk_tab, page_tab = st.tabs(["Searchable chunks", "Original page text"])
 with chunk_tab:
     for chunk in chunks:
         with st.expander(
-            f"Page {chunk.page_number} · chunk {chunk.chunk_number}"
+            f"{chunk.location.label().title()} · chunk {chunk.chunk_number}"
         ):
             st.write(chunk.text)
 
 with page_tab:
     for page in pages:
-        with st.expander(f"Page {page.page_number} · {page.document_name}"):
+        with st.expander(
+            f"{page.location.label().title()} · {page.source_name}"
+        ):
             st.text(page.text)

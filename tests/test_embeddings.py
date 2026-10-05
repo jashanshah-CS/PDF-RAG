@@ -1,7 +1,8 @@
 import numpy as np
 import pytest
+from datetime import UTC, datetime
 
-from src.rag_project.chunker import PdfChunk
+from src.rag_project.documents import DocumentChunk, SourceLocation, SourceType
 from src.rag_project.embeddings import embed_chunks
 
 
@@ -23,8 +24,8 @@ class FakeModel:
 
 def test_embedding_is_attached_to_its_original_chunk() -> None:
     chunks = [
-        PdfChunk("handbook.pdf", 2, 1, "annual leave policy"),
-        PdfChunk("handbook.pdf", 3, 1, "remote working policy"),
+        make_chunk("annual leave policy", 2),
+        make_chunk("remote working policy", 3),
     ]
 
     embedded = embed_chunks(chunks, FakeModel())
@@ -36,3 +37,15 @@ def test_embedding_is_attached_to_its_original_chunk() -> None:
 
 def test_empty_chunk_list_needs_no_model_work() -> None:
     assert embed_chunks([], FakeModel()) == []
+
+
+def make_chunk(text: str, page: int) -> DocumentChunk:
+    return DocumentChunk(
+        document_id="pdf-handbook",
+        source_type=SourceType.PDF,
+        source_name="handbook.pdf",
+        chunk_number=1,
+        text=text,
+        location=SourceLocation(page_number=page),
+        added_at=datetime(2026, 10, 5, tzinfo=UTC),
+    )

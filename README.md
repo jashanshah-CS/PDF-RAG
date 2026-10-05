@@ -10,6 +10,8 @@ tested before the next feature is added.
 
 - Upload one text-based PDF through a Streamlit interface
 - Extract text while retaining the filename and page number
+- Represent extracted content with a source-neutral document model
+- Assign stable, content-based document identifiers and ingestion timestamps
 - Split pages into chunks of up to 150 words with a 30-word overlap
 - Create a normalized 384-dimensional embedding for every chunk
 - Search for the three chunks most relevant to a natural-language question
@@ -32,9 +34,9 @@ It is downloaded once and stored in the local `.model-cache` directory.
 ```text
 PDF upload
     ↓
-Page-by-page text extraction
+Unified documents with source metadata
     ↓
-150-word chunks with 30-word overlap
+Source-neutral chunks with inherited metadata
     ↓
 384-dimensional local embeddings
     ↓
@@ -45,7 +47,9 @@ Top three evidence chunks
 Local Qwen3 8B answer with source labels
 ```
 
-Version 1 now includes a repeatable evaluation runner.
+Version 2 starts from the tested Version 1 pipeline. Its unified document and
+chunk models are the foundation for multiple PDFs, approved webpages, and CSV
+sources while the current interface remains focused on one PDF.
 
 ## Requirements
 
@@ -121,6 +125,16 @@ are more useful than extended internal reasoning.
 - [x] Display filename and page citations
 - [x] Add a repeatable evaluation runner
 - [ ] Achieve acceptable results on 15–20 prepared questions
+
+## Version 2 roadmap
+
+- [x] Introduce unified document and chunk models
+- [x] Add stable document IDs, source locations, and ingestion timestamps
+- [x] Make embeddings, retrieval, generation, citations, and evaluation source-neutral
+- [ ] Upload and search multiple PDFs together
+- [ ] Ingest an approved website or small list of pages
+- [ ] Ingest CSV data and use structured querying for calculations
+- [ ] Evaluate PDF, website, CSV, cross-source, and unsupported questions
 
 ## Limitations
 

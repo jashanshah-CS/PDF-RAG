@@ -1,6 +1,7 @@
 import pytest
+from datetime import UTC, datetime
 
-from src.rag_project.chunker import PdfChunk
+from src.rag_project.documents import DocumentChunk, SourceLocation, SourceType
 from src.rag_project.embeddings import EmbeddedChunk
 from src.rag_project.generator import (
     OLLAMA_MODEL,
@@ -14,7 +15,15 @@ from src.rag_project.search import SearchResult
 
 
 def result(text: str, page: int, score: float = 0.8) -> SearchResult:
-    chunk = PdfChunk("handbook.pdf", page, 1, text)
+    chunk = DocumentChunk(
+        document_id="pdf-handbook",
+        source_type=SourceType.PDF,
+        source_name="handbook.pdf",
+        chunk_number=1,
+        text=text,
+        location=SourceLocation(page_number=page),
+        added_at=datetime(2026, 10, 5, tzinfo=UTC),
+    )
     return SearchResult(EmbeddedChunk(chunk, (1.0, 0.0)), score)
 
 
@@ -24,10 +33,11 @@ def test_evidence_contains_source_labels_and_page_metadata() -> None:
     )
 
     assert "[Source 1]" in evidence
-    assert "Document: handbook.pdf" in evidence
-    assert "Page: 4" in evidence
+    assert "Source type: pdf" in evidence
+    assert "Source: handbook.pdf" in evidence
+    assert "Location: page 4" in evidence
     assert "[Source 2]" in evidence
-    assert "Page: 7" in evidence
+    assert "Location: page 7" in evidence
 
 
 def test_generation_sends_grounded_non_streaming_chat_request() -> None:
@@ -54,14 +64,14 @@ def test_generation_sends_grounded_non_streaming_chat_request() -> None:
     assert captured_payload["format"]["required"] == ["answer"]
     assert captured_payload["options"]["temperature"] == 0.1
     assert "outside knowledge" in captured_payload["messages"][0]["content"]
-    assert "Page: 4" in captured_payload["messages"][1]["content"]
+    assert "Location: page 4" in captured_payload["messages"][1]["content"]
 
 
 def test_generation_rejects_missing_question_or_evidence() -> None:
     with pytest.raises(ValueError, match="Enter a question"):
         generate_grounded_answer(" ", [result("text", 1)])
 
-    with pytest.raises(ValueError, match="No PDF evidence"):
+    with pytest.raises(ValueError, match="No source evidence"):
         generate_grounded_answer("A question", [])
 
 
