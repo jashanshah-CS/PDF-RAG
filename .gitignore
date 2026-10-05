@@ -23,6 +23,7 @@ uploads/
 evaluation/questions*.csv
 !evaluation/questions.example.csv
 evaluation/results*.csv
+output/*.log
 
 # Editors and operating systems
 .idea/

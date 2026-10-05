@@ -9,7 +9,7 @@ from src.rag_project.generator import (
     OllamaError,
     generate_grounded_answer,
 )
-from src.rag_project.pdf_loader import extract_pdf_pages
+from src.rag_project.pdf_loader import extract_pdf_files
 from src.rag_project.search import semantic_search
 
 
@@ -140,7 +140,7 @@ with st.sidebar:
     st.caption("PRIVATE DOCUMENT Q&A")
     st.divider()
     st.markdown("**Pipeline**")
-    st.markdown("① Upload PDF")
+    st.markdown("① Upload PDFs")
     st.markdown("② Extract & chunk")
     st.markdown("③ Hybrid search")
     st.markdown("④ Generate answer")
@@ -148,31 +148,31 @@ with st.sidebar:
     st.divider()
     st.caption("ACTIVE MODEL")
     st.code(OLLAMA_MODEL, language=None)
-    st.caption("Your document and questions stay on this computer.")
+    st.caption("Your documents and questions stay on this computer.")
 
 st.markdown(
     """
     <div class="hero">
         <div class="hero-kicker">Version 2 · Unified sources</div>
-        <h1>Ask your PDF. Verify every answer.</h1>
-        <p>Search a document with local embeddings and get concise answers backed by page-level evidence.</p>
+        <h1>Ask your PDFs. Verify every answer.</h1>
+        <p>Search multiple documents together and get concise answers backed by filename and page-level evidence.</p>
         <span class="privacy-pill">● 100% local processing</span>
     </div>
     """,
     unsafe_allow_html=True,
 )
 
-st.markdown('<div class="section-label">01 · Document</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-label">01 · Documents</div>', unsafe_allow_html=True)
 with st.container(border=True):
-    uploaded_file = st.file_uploader(
-        "Upload a text-based PDF",
+    uploaded_files = st.file_uploader(
+        "Upload one or more text-based PDFs",
         type=["pdf"],
-        accept_multiple_files=False,
-        help="The PDF is processed in memory and is not intentionally saved.",
+        accept_multiple_files=True,
+        help="PDFs are processed in memory and are not intentionally saved.",
     )
 
-if uploaded_file is None:
-    st.info("Choose a PDF above to prepare it for questions.", icon="↗️")
+if not uploaded_files:
+    st.info("Choose one or more PDFs above to prepare them for questions.", icon="↗️")
     starter_1, starter_2, starter_3 = st.columns(3)
     with starter_1:
         with st.container(border=True):
@@ -189,14 +189,17 @@ if uploaded_file is None:
     st.stop()
 
 try:
-    pages = extract_pdf_pages(uploaded_file.getvalue(), uploaded_file.name)
+    pages = extract_pdf_files(
+        (uploaded_file.name, uploaded_file.getvalue())
+        for uploaded_file in uploaded_files
+    )
 except Exception as error:
-    st.error(f"I could not read this PDF: {error}")
+    st.error(f"I could not read the uploaded PDFs: {error}")
     st.stop()
 
 if not pages:
     st.warning(
-        "No selectable text was found. This may be a scanned PDF; "
+        "No selectable text was found. The files may be scanned PDFs; "
         "image-based PDFs will need OCR in a later step."
     )
     st.stop()
@@ -214,15 +217,21 @@ with st.spinner("Creating local embeddings..."):
 embedding_dimensions = (
     len(embedded_chunks[0].embedding) if embedded_chunks else 0
 )
+document_count = len({page.document_id for page in pages})
 
-st.markdown('<div class="section-label">02 · Document ready</div>', unsafe_allow_html=True)
-col1, col2, col3, col4 = st.columns(4)
-col1.metric("Pages with text", len(pages))
-col2.metric("Approximate words", f"{word_count:,}")
-col3.metric("Searchable chunks", len(chunks))
-col4.metric("Numbers per embedding", embedding_dimensions)
+st.markdown('<div class="section-label">02 · Documents ready</div>', unsafe_allow_html=True)
+col1, col2, col3, col4, col5 = st.columns(5)
+col1.metric("Documents", document_count)
+col2.metric("Pages with text", len(pages))
+col3.metric("Approximate words", f"{word_count:,}")
+col4.metric("Searchable chunks", len(chunks))
+col5.metric("Embedding dimensions", embedding_dimensions)
 
-st.success("Document indexed successfully and ready for questions.", icon="✅")
+label = "document" if document_count == 1 else "documents"
+st.success(
+    f"{document_count} {label} indexed successfully and ready for questions.",
+    icon="✅",
+)
 
 with st.expander("Behind the scenes: chunks and embeddings"):
     st.write(
@@ -237,12 +246,12 @@ with st.expander("Behind the scenes: chunks and embeddings"):
         str([round(value, 4) for value in embedded_chunks[0].embedding[:8]])
     )
 
-st.markdown('<div class="section-label">03 · Ask your document</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-label">03 · Ask your documents</div>', unsafe_allow_html=True)
 st.subheader("What would you like to know?")
 
 with st.form("semantic_search_form"):
     question = st.text_input(
-        "Ask a question about this document",
+        "Ask a question about these documents",
         placeholder="For example: What is the annual leave policy?",
     )
     search_submitted = st.form_submit_button("Ask with Qwen3 8B  →")

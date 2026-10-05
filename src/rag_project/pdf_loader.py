@@ -1,5 +1,6 @@
 """Load PDF pages into the unified document model."""
 
+from collections.abc import Iterable
 from datetime import UTC, datetime
 from io import BytesIO
 
@@ -44,3 +45,32 @@ def extract_pdf_pages(
             )
 
     return pages
+
+
+def extract_pdf_files(
+    pdf_files: Iterable[tuple[str, bytes]],
+    *,
+    added_at: datetime | None = None,
+) -> list[Document]:
+    """Extract multiple PDFs into one deduplicated document collection."""
+    ingestion_time = added_at or datetime.now(UTC)
+    documents: list[Document] = []
+    seen_document_ids: set[str] = set()
+
+    for document_name, pdf_bytes in pdf_files:
+        pages = extract_pdf_pages(
+            pdf_bytes,
+            document_name,
+            added_at=ingestion_time,
+        )
+        if not pages:
+            continue
+
+        document_id = pages[0].document_id
+        if document_id in seen_document_ids:
+            continue
+
+        seen_document_ids.add(document_id)
+        documents.extend(pages)
+
+    return documents

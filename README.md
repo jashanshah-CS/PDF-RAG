@@ -8,7 +8,7 @@ tested before the next feature is added.
 
 ## Current features
 
-- Upload one text-based PDF through a Streamlit interface
+- Upload and search one or more text-based PDFs through a Streamlit interface
 - Extract text while retaining the filename and page number
 - Represent extracted content with a source-neutral document model
 - Assign stable, content-based document identifiers and ingestion timestamps
@@ -49,7 +49,7 @@ Local Qwen3 8B answer with source labels
 
 Version 2 starts from the tested Version 1 pipeline. Its unified document and
 chunk models are the foundation for multiple PDFs, approved webpages, and CSV
-sources while the current interface remains focused on one PDF.
+sources. The current interface can search multiple PDFs together.
 
 ## Requirements
 
@@ -131,7 +131,7 @@ are more useful than extended internal reasoning.
 - [x] Introduce unified document and chunk models
 - [x] Add stable document IDs, source locations, and ingestion timestamps
 - [x] Make embeddings, retrieval, generation, citations, and evaluation source-neutral
-- [ ] Upload and search multiple PDFs together
+- [x] Upload and search multiple PDFs together
 - [ ] Ingest an approved website or small list of pages
 - [ ] Ingest CSV data and use structured querying for calculations
 - [ ] Evaluate PDF, website, CSV, cross-source, and unsupported questions
