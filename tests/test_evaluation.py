@@ -20,14 +20,22 @@ class QueryModel:
         return np.array([[1.0, 0.0]], dtype=np.float32)
 
 
-def embedded(text: str, page: int, vector=(1.0, 0.0)) -> EmbeddedChunk:
+def embedded(
+    text: str,
+    page: int | None,
+    vector=(1.0, 0.0),
+    *,
+    source_name: str = "handbook.pdf",
+    source_type: SourceType = SourceType.PDF,
+    url: str | None = None,
+) -> EmbeddedChunk:
     chunk = DocumentChunk(
-        document_id="pdf-handbook",
-        source_type=SourceType.PDF,
-        source_name="handbook.pdf",
+        document_id=f"{source_type.value}-{source_name}",
+        source_type=source_type,
+        source_name=source_name,
         chunk_number=1,
         text=text,
-        location=SourceLocation(page_number=page),
+        location=SourceLocation(page_number=page, url=url),
         added_at=datetime(2026, 10, 5, tzinfo=UTC),
     )
     return EmbeddedChunk(chunk, vector)
@@ -49,6 +57,22 @@ def test_loads_csv_case_fields(tmp_path: Path) -> None:
     )
     assert cases[1].expected_page is None
     assert cases[1].should_refuse is True
+
+
+def test_loads_multi_source_expectations(tmp_path: Path) -> None:
+    csv_path = tmp_path / "questions.csv"
+    csv_path.write_text(
+        "question,expected_keywords,expected_sources,expected_pages,expected_urls,should_refuse\n"
+        '"Compare the policies",remote|hybrid,handbook.pdf|Benefits,4,'
+        'https://example.com/benefits,false\n',
+        encoding="utf-8",
+    )
+
+    case = load_evaluation_cases(csv_path)[0]
+
+    assert case.expected_sources == ("handbook.pdf", "Benefits")
+    assert case.expected_pages == (4,)
+    assert case.expected_urls == ("https://example.com/benefits",)
 
 
 def test_resolves_source_labels_to_retrieved_pages() -> None:
@@ -76,6 +100,76 @@ def test_answerable_case_passes_all_checks() -> None:
     assert result.citation_hit is True
     assert result.refusal_correct is True
     assert result.passed is True
+
+
+def test_cross_source_case_requires_pdf_and_website_citations() -> None:
+    case = EvaluationCase(
+        "Compare remote work information.",
+        ("remote", "hybrid"),
+        None,
+        False,
+        expected_sources=("handbook.pdf", "Benefits"),
+        expected_pages=(4,),
+        expected_urls=("https://example.com/benefits",),
+    )
+    chunks = [
+        embedded("Remote work is permitted.", 4, source_name="handbook.pdf"),
+        embedded(
+            "The hybrid schedule has two office days.",
+            None,
+            source_name="Benefits",
+            source_type=SourceType.WEBSITE,
+            url="https://example.com/benefits",
+        ),
+    ]
+
+    result = evaluate_case(
+        case,
+        chunks,
+        QueryModel(),
+        answer_question=lambda question, results: (
+            "Remote work uses a hybrid schedule [Source 1] [Source 2]."
+        ),
+    )
+
+    assert result.retrieval_hit is True
+    assert result.citation_hit is True
+    assert result.retrieved_sources == "Benefits|handbook.pdf"
+    assert result.cited_urls == "https://example.com/benefits"
+    assert result.passed is True
+
+
+def test_cross_source_case_fails_when_website_is_not_cited() -> None:
+    case = EvaluationCase(
+        "Compare remote work information.",
+        ("remote",),
+        None,
+        False,
+        expected_sources=("handbook.pdf", "Benefits"),
+        expected_pages=(4,),
+        expected_urls=("https://example.com/benefits",),
+    )
+    chunks = [
+        embedded("Remote work is permitted.", 4),
+        embedded(
+            "Hybrid schedule.",
+            None,
+            source_name="Benefits",
+            source_type=SourceType.WEBSITE,
+            url="https://example.com/benefits",
+        ),
+    ]
+
+    result = evaluate_case(
+        case,
+        chunks,
+        QueryModel(),
+        answer_question=lambda question, results: "Remote work is permitted [Source 1].",
+    )
+
+    assert result.retrieval_hit is True
+    assert result.citation_hit is False
+    assert result.passed is False
 
 
 def test_unsupported_case_passes_when_model_refuses() -> None:

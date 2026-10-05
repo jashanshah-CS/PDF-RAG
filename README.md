@@ -86,23 +86,32 @@ The first PDF upload may take longer while the free embedding model downloads.
 uv run pytest -q
 ```
 
-## Evaluate Version 1
+## Evaluate Version 2
 
 Copy `evaluation/questions.example.csv` to `evaluation/questions.csv`, then
-replace the examples with 15–20 questions about your PDF.
+replace the examples with questions about your PDFs and approved website.
 
 Each CSV row contains:
 
 - `question`: the question sent to the RAG pipeline;
 - `expected_keywords`: required answer terms separated by `|`;
-- `expected_page`: the page that should be retrieved and cited;
-- `should_refuse`: `true` when the PDF does not contain the answer.
+- `expected_sources`: required PDF filenames or webpage titles separated by `|`;
+- `expected_pages`: required PDF page numbers separated by `|`;
+- `expected_urls`: required webpage URLs separated by `|`;
+- `should_refuse`: `true` when none of the supplied sources contains the answer.
 
-Run the full PDF pipeline and save a detailed report:
+Run multiple PDFs and a bounded website crawl together:
 
 ```powershell
-uv run python evaluate.py --pdf "C:\path\to\document.pdf"
+uv run python evaluate.py `
+  --pdf "C:\path\to\handbook.pdf" `
+  --pdf "C:\path\to\benefits.pdf" `
+  --website "https://example.com/start"
 ```
+
+You may evaluate PDFs alone or a website alone. Repeat `--pdf` or `--website`
+to add sources. Each website crawl is limited to five pages by default; use
+`--website-pages 1` through `--website-pages 10` to change that bound.
 
 The report is written to `evaluation/results.csv`. Local questions, results,
 and PDFs are ignored by Git so private evaluation material is not published.
@@ -111,7 +120,9 @@ To use another installed Ollama model without changing the code:
 
 ```powershell
 $env:OLLAMA_MODEL = "llama3.2:latest"
-uv run python evaluate.py --pdf "C:\path\to\document.pdf" --output "evaluation/results-llama32.csv"
+uv run python evaluate.py --pdf "C:\path\to\document.pdf" `
+  --website "https://example.com/start" `
+  --output "evaluation/results-llama32.csv"
 ```
 
 The chat request sets Ollama's `think` option to `false`. This avoids long
@@ -136,7 +147,7 @@ are more useful than extended internal reasoning.
 - [x] Make embeddings, retrieval, generation, citations, and evaluation source-neutral
 - [x] Upload and search multiple PDFs together
 - [x] Ingest up to five linked pages from one approved public website
-- [ ] Evaluate PDF, website, cross-source, and unsupported questions
+- [x] Evaluate PDF, website, cross-source, and unsupported questions
 
 ## Limitations
 

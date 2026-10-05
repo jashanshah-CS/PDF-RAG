@@ -1,4 +1,4 @@
-"""Transparent evaluation helpers for the Version 1 RAG pipeline."""
+"""Transparent evaluation helpers for PDF and website RAG pipelines."""
 
 from collections.abc import Callable
 import csv
@@ -20,6 +20,9 @@ class EvaluationCase:
     expected_keywords: tuple[str, ...]
     expected_page: int | None
     should_refuse: bool
+    expected_sources: tuple[str, ...] = ()
+    expected_pages: tuple[int, ...] = ()
+    expected_urls: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -29,10 +32,17 @@ class EvaluationResult:
     question: str
     expected_keywords: str
     expected_page: int | None
+    expected_sources: str
+    expected_pages: str
+    expected_urls: str
     should_refuse: bool
     actual_answer: str
+    retrieved_sources: str
     retrieved_pages: str
+    retrieved_urls: str
+    cited_sources: str
     cited_pages: str
+    cited_urls: str
     retrieval_hit: bool | None
     keyword_hit: bool | None
     citation_hit: bool | None
@@ -59,12 +69,7 @@ def load_evaluation_cases(path: Path) -> list[EvaluationCase]:
 
     with path.open(encoding="utf-8-sig", newline="") as file:
         reader = csv.DictReader(file)
-        required = {
-            "question",
-            "expected_keywords",
-            "expected_page",
-            "should_refuse",
-        }
+        required = {"question", "expected_keywords", "should_refuse"}
         missing = required.difference(reader.fieldnames or [])
         if missing:
             raise ValueError(f"Missing CSV columns: {', '.join(sorted(missing))}")
@@ -79,7 +84,22 @@ def load_evaluation_cases(path: Path) -> list[EvaluationCase]:
                 for keyword in row["expected_keywords"].split("|")
                 if keyword.strip()
             )
-            page_text = row["expected_page"].strip()
+            page_text = (row.get("expected_page") or "").strip()
+            expected_pages = tuple(
+                int(page.strip())
+                for page in (row.get("expected_pages") or "").split("|")
+                if page.strip()
+            )
+            expected_sources = tuple(
+                source.strip()
+                for source in (row.get("expected_sources") or "").split("|")
+                if source.strip()
+            )
+            expected_urls = tuple(
+                url.strip()
+                for url in (row.get("expected_urls") or "").split("|")
+                if url.strip()
+            )
 
             cases.append(
                 EvaluationCase(
@@ -87,6 +107,9 @@ def load_evaluation_cases(path: Path) -> list[EvaluationCase]:
                     expected_keywords=keywords,
                     expected_page=int(page_text) if page_text else None,
                     should_refuse=parse_bool(row["should_refuse"]),
+                    expected_sources=expected_sources,
+                    expected_pages=expected_pages,
+                    expected_urls=expected_urls,
                 )
             )
 
@@ -107,6 +130,44 @@ def cited_pages(answer: str, results: list[SearchResult]) -> list[int]:
         if 1 <= number <= len(results)
     }
     return sorted(page for page in pages if page is not None)
+
+
+def cited_results(answer: str, results: list[SearchResult]) -> list[SearchResult]:
+    """Resolve model source labels to the retrieved results they reference."""
+    source_numbers = sorted(
+        {int(match) for match in re.findall(r"\[Source\s+(\d+)\]", answer, re.I)}
+    )
+    return [results[number - 1] for number in source_numbers if 1 <= number <= len(results)]
+
+
+def _source_values(results: list[SearchResult]) -> tuple[list[str], list[int], list[str]]:
+    sources = sorted({result.embedded_chunk.chunk.source_name for result in results})
+    pages = sorted(
+        page
+        for page in {
+            result.embedded_chunk.chunk.location.page_number for result in results
+        }
+        if page is not None
+    )
+    urls = sorted(
+        url
+        for url in {
+            result.embedded_chunk.chunk.location.url for result in results
+        }
+        if url is not None
+    )
+    return sources, pages, urls
+
+
+def _contains_all(actual: list[str], expected: tuple[str, ...]) -> bool:
+    normalized_actual = [value.casefold().rstrip("/") for value in actual]
+    return all(
+        any(
+            expected_value.casefold().rstrip("/") in actual_value
+            for actual_value in normalized_actual
+        )
+        for expected_value in expected
+    )
 
 
 def normalize_for_keyword_check(text: str) -> str:
@@ -143,21 +204,26 @@ def evaluate_case(
             error = str(exception)
 
     elapsed = perf_counter() - started
-    retrieved = sorted(
-        page
-        for page in {
-            result.embedded_chunk.chunk.location.page_number for result in results
-        }
-        if page is not None
+    retrieved_sources, retrieved_pages, retrieved_urls = _source_values(results)
+    cited_sources, cited_page_values, cited_urls = _source_values(
+        cited_results(answer, results)
     )
-    cited = cited_pages(answer, results)
-    answer_lower = answer.lower()
     normalized_answer = normalize_for_keyword_check(answer)
     refusal_detected = is_refusal_answer(answer)
     refusal_correct = refusal_detected == case.should_refuse
 
+    expected_pages = case.expected_pages or (
+        (case.expected_page,) if case.expected_page is not None else ()
+    )
+    has_source_expectation = bool(
+        case.expected_sources or expected_pages or case.expected_urls
+    )
     retrieval_hit = (
-        case.expected_page in retrieved if case.expected_page is not None else None
+        _contains_all(retrieved_sources, case.expected_sources)
+        and all(page in retrieved_pages for page in expected_pages)
+        and _contains_all(retrieved_urls, case.expected_urls)
+        if has_source_expectation
+        else None
     )
     keyword_hit = (
         all(
@@ -168,7 +234,11 @@ def evaluate_case(
         else None
     )
     citation_hit = (
-        case.expected_page in cited if case.expected_page is not None else None
+        _contains_all(cited_sources, case.expected_sources)
+        and all(page in cited_page_values for page in expected_pages)
+        and _contains_all(cited_urls, case.expected_urls)
+        if has_source_expectation
+        else None
     )
 
     if case.should_refuse:
@@ -181,10 +251,17 @@ def evaluate_case(
         question=case.question,
         expected_keywords="|".join(case.expected_keywords),
         expected_page=case.expected_page,
+        expected_sources="|".join(case.expected_sources),
+        expected_pages="|".join(str(page) for page in expected_pages),
+        expected_urls="|".join(case.expected_urls),
         should_refuse=case.should_refuse,
         actual_answer=answer,
-        retrieved_pages="|".join(str(page) for page in retrieved),
-        cited_pages="|".join(str(page) for page in cited),
+        retrieved_sources="|".join(retrieved_sources),
+        retrieved_pages="|".join(str(page) for page in retrieved_pages),
+        retrieved_urls="|".join(retrieved_urls),
+        cited_sources="|".join(cited_sources),
+        cited_pages="|".join(str(page) for page in cited_page_values),
+        cited_urls="|".join(cited_urls),
         retrieval_hit=retrieval_hit,
         keyword_hit=keyword_hit,
         citation_hit=citation_hit,
