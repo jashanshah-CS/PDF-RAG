@@ -10,6 +10,7 @@ from src.rag_project.evaluation import (
     cited_pages,
     evaluate_case,
     load_evaluation_cases,
+    contains_keyword,
     normalize_for_keyword_check,
 )
 from src.rag_project.search import SearchResult
@@ -217,4 +218,11 @@ def test_keyword_normalization_treats_hyphenated_forms_as_equivalent() -> None:
 def test_keyword_normalization_treats_pound_symbol_as_gbp() -> None:
     assert normalize_for_keyword_check("The allowance is £1,200.") == (
         "the allowance is gbp 1 200"
+    )
+
+
+def test_keyword_matching_allows_harmless_words_between_expected_terms() -> None:
+    assert contains_keyword(
+        "He is pursuing a BSc degree in Computer Science.",
+        "BSc Computer Science",
     )

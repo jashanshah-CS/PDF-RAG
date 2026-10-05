@@ -24,14 +24,22 @@ outside knowledge. Do not mix attributes from different projects, roles, or
 sections. Answer every part of the question and inspect all evidence, including
 source headers, before refusing. Only when none of the evidence supports an
 answer, say: "I cannot find this in the supplied sources." Answer in a complete
-sentence that restates the subject and key terms from the evidence."""
+sentence that restates the subject and key terms from the evidence. Return the
+number of every evidence block used in source_numbers; include all supporting
+blocks when an answer combines facts from multiple sources. Do not mention the
+source_numbers field or its value in the answer prose."""
 
 ANSWER_SCHEMA = {
     "type": "object",
     "properties": {
         "answer": {"type": "string"},
+        "source_numbers": {
+            "type": "array",
+            "items": {"type": "integer"},
+            "description": "Every numbered evidence block used for the answer.",
+        },
     },
-    "required": ["answer"],
+    "required": ["answer", "source_numbers"],
     "additionalProperties": False,
 }
 
@@ -55,6 +63,9 @@ def is_refusal_answer(answer: str) -> bool:
         "not provided",
         "not stated",
         "does not contain",
+        "does not have a specified",
+        "is not specified",
+        "no specified",
     )
     return any(phrase in normalized for phrase in phrases)
 
@@ -134,6 +145,25 @@ def supporting_source(answer: str, results: list[SearchResult]) -> int:
     return source_number
 
 
+def validated_source_numbers(
+    answer: str,
+    requested_numbers: object,
+    results: list[SearchResult],
+) -> list[int]:
+    """Validate model-selected citations and fall back to lexical grounding."""
+    if isinstance(requested_numbers, list):
+        valid_numbers = sorted(
+            {
+                number
+                for number in requested_numbers
+                if isinstance(number, int) and 1 <= number <= len(results)
+            }
+        )
+        if valid_numbers:
+            return valid_numbers
+    return [supporting_source(answer, results)]
+
+
 def request_ollama(payload: dict[str, Any]) -> dict[str, Any]:
     """Send one non-streaming chat request to the local Ollama API."""
     request = Request(
@@ -191,6 +221,7 @@ def generate_grounded_answer(
     try:
         structured = json.loads(content)
         answer = structured["answer"].strip()
+        source_numbers = structured.get("source_numbers", [])
     except (json.JSONDecodeError, KeyError, TypeError, ValueError) as error:
         raise OllamaError("Ollama returned an invalid structured answer.") from error
 
@@ -199,5 +230,8 @@ def generate_grounded_answer(
     if is_refusal_answer(answer):
         return answer
 
-    source_number = supporting_source(answer, results)
-    return f"{answer} [Source {source_number}]"
+    citations = " ".join(
+        f"[Source {number}]"
+        for number in validated_source_numbers(answer, source_numbers, results)
+    )
+    return f"{answer} {citations}"

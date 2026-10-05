@@ -177,6 +177,22 @@ def normalize_for_keyword_check(text: str) -> str:
     return " ".join(normalized.split())
 
 
+def contains_keyword(answer: str, keyword: str) -> bool:
+    """Match a keyword phrase while allowing harmless words between its terms."""
+    answer_terms = normalize_for_keyword_check(answer).split()
+    keyword_terms = normalize_for_keyword_check(keyword).split()
+    if not keyword_terms:
+        return True
+
+    position = 0
+    for term in answer_terms:
+        if term == keyword_terms[position]:
+            position += 1
+            if position == len(keyword_terms):
+                return True
+    return False
+
+
 def evaluate_case(
     case: EvaluationCase,
     embedded_chunks: list[EmbeddedChunk],
@@ -208,7 +224,6 @@ def evaluate_case(
     cited_sources, cited_page_values, cited_urls = _source_values(
         cited_results(answer, results)
     )
-    normalized_answer = normalize_for_keyword_check(answer)
     refusal_detected = is_refusal_answer(answer)
     refusal_correct = refusal_detected == case.should_refuse
 
@@ -227,7 +242,7 @@ def evaluate_case(
     )
     keyword_hit = (
         all(
-            normalize_for_keyword_check(keyword) in normalized_answer
+            contains_keyword(answer, keyword)
             for keyword in case.expected_keywords
         )
         if case.expected_keywords

@@ -83,7 +83,7 @@ def test_generation_sends_grounded_non_streaming_chat_request() -> None:
     assert captured_payload["model"] == OLLAMA_MODEL
     assert captured_payload["stream"] is False
     assert captured_payload["think"] is False
-    assert captured_payload["format"]["required"] == ["answer"]
+    assert captured_payload["format"]["required"] == ["answer", "source_numbers"]
     assert captured_payload["options"]["temperature"] == 0.1
     assert "outside knowledge" in captured_payload["messages"][0]["content"]
     assert "Location: page 4" in captured_payload["messages"][1]["content"]
@@ -115,6 +115,28 @@ def test_python_selects_source_with_best_answer_overlap() -> None:
     assert supporting_source("Employees receive 25 days.", results) == 2
 
 
+def test_generation_can_cite_multiple_model_selected_sources() -> None:
+    results = [
+        result("Project Orion uses forecasting.", 1),
+        result("Jashan likes databases.", 2),
+    ]
+
+    def fake_request(payload):
+        return {
+            "message": {
+                "content": (
+                    '{"answer":"Project Orion uses forecasting and Jashan likes databases.",'
+                    '"source_numbers":[1,2]}'
+                )
+            }
+        }
+
+    assert generate_grounded_answer("Connect these facts", results, fake_request) == (
+        "Project Orion uses forecasting and Jashan likes databases. "
+        "[Source 1] [Source 2]"
+    )
+
+
 def test_generation_rejects_answer_that_cannot_be_grounded() -> None:
     with pytest.raises(OllamaError, match="matched to supporting evidence"):
         generate_grounded_answer(
@@ -133,6 +155,7 @@ def test_generation_rejects_answer_that_cannot_be_grounded() -> None:
         "I could not find any information about that.",
         "I do not find an explicit salary request.",
         "There is no information about sports.",
+        "The cafeteria opening time is not specified in the supplied sources.",
     ],
 )
 def test_recognizes_equivalent_refusal_phrases(answer: str) -> None:

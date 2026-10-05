@@ -23,12 +23,16 @@ class QueryModel:
         return np.array([[1.0, 0.0]], dtype=np.float32)
 
 
-def embedded(text: str, vector: tuple[float, ...]) -> EmbeddedChunk:
+def embedded(
+    text: str,
+    vector: tuple[float, ...],
+    source_name: str = "handbook.pdf",
+) -> EmbeddedChunk:
     return EmbeddedChunk(
         chunk=DocumentChunk(
             document_id="pdf-handbook",
             source_type=SourceType.PDF,
-            source_name="handbook.pdf",
+            source_name=source_name,
             chunk_number=1,
             text=text,
             location=SourceLocation(page_number=1),
@@ -83,3 +87,24 @@ def test_exact_policy_terms_break_close_semantic_ties() -> None:
     )
 
     assert results[0].embedded_chunk.chunk.text.startswith("Expense receipts")
+
+
+def test_source_name_gives_later_document_page_title_context() -> None:
+    class EqualSemanticModel:
+        def encode(self, sentences, **kwargs):
+            return np.array([[1.0, 0.0]], dtype=np.float32)
+
+    chunks = [
+        embedded("Project history and education.", (1.0, 0.0)),
+        embedded(
+            "Success measures are 12 and 92 percent.",
+            (1.0, 0.0),
+            source_name="project_orion_brief.pdf",
+        ),
+    ]
+
+    results = semantic_search(
+        "Project Orion success measures", chunks, EqualSemanticModel(), top_k=1
+    )
+
+    assert results[0].embedded_chunk.chunk.text.startswith("Success measures")

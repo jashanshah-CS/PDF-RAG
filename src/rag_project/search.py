@@ -38,7 +38,7 @@ def semantic_search(
     query: str,
     embedded_chunks: list[EmbeddedChunk],
     model: TextEncoder,
-    top_k: int = 3,
+    top_k: int = 5,
 ) -> list[SearchResult]:
     """Return the chunks whose meanings are closest to the query."""
     if not query.strip():
@@ -59,7 +59,9 @@ def semantic_search(
     ranked_results = []
     for item in embedded_chunks:
         semantic_score = float(np.dot(query_vector, np.asarray(item.embedding)))
-        chunk_terms = lexical_terms(item.chunk.text)
+        # Later PDF pages often omit the document title. Including the source
+        # name preserves that context for queries naming the document.
+        chunk_terms = lexical_terms(f"{item.chunk.source_name} {item.chunk.text}")
         lexical_coverage = (
             len(query_terms.intersection(chunk_terms)) / len(query_terms)
             if query_terms
