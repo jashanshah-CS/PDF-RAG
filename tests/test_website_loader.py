@@ -6,6 +6,8 @@ import pytest
 from src.rag_project.documents import SourceType
 from src.rag_project.website_loader import (
     WebsiteLoadError,
+    crawl_website,
+    extract_same_domain_links,
     extract_website_documents,
     fetch_public_html,
     load_website,
@@ -97,6 +99,16 @@ def test_page_without_readable_text_is_rejected() -> None:
         )
 
 
+def test_visible_form_labels_are_kept_without_executing_controls() -> None:
+    documents = extract_website_documents(
+        b"<title>Contact</title><h1>Contact me</h1>"
+        b"<form><label>Email address</label><button>Send message</button></form>",
+        "https://example.com/contact",
+    )
+
+    assert documents[0].text == "Contact me. Email address Send message"
+
+
 def test_load_website_uses_final_url_and_charset() -> None:
     def fake_fetcher(url: str) -> tuple[str, bytes, str]:
         assert url == "https://example.com/start"
@@ -134,3 +146,72 @@ def test_fetch_rejects_non_html_content(monkeypatch) -> None:
             "https://example.com/file.pdf",
             open_url=lambda request, timeout: FakeResponse(),
         )
+
+
+def test_discovers_only_same_domain_html_links() -> None:
+    html = b"""
+        <a href="/about#team">About</a>
+        <a href="https://example.com/skills?tracking=1">Skills</a>
+        <a href="https://other.example/contact">External</a>
+        <a href="/files/cv.pdf">CV</a>
+        <a href="mailto:person@example.com">Email</a>
+        <a href="/about#history">Duplicate about</a>
+    """
+
+    links = extract_same_domain_links(
+        html,
+        "https://example.com/portfolio",
+        "example.com",
+    )
+
+    assert links == [
+        "https://example.com/about",
+        "https://example.com/skills",
+    ]
+
+
+def test_crawl_indexes_unique_same_domain_pages_up_to_limit() -> None:
+    portfolio = b"""
+        <title>Portfolio</title><h1>Home</h1><p>Welcome.</p>
+        <a href="/portfolio">Duplicate route</a>
+        <a href="/about">About</a>
+        <a href="/skills">Skills</a>
+        <a href="/contact">Contact</a>
+        <a href="https://external.example/page">External</a>
+    """
+    pages = {
+        "https://example.com/start": portfolio,
+        "https://example.com/portfolio": portfolio,
+        "https://example.com/about": (
+            b"<title>About</title><h1>About me</h1><p>Computer science student.</p>"
+        ),
+        "https://example.com/skills": (
+            b"<title>Skills</title><h1>Skills</h1><p>Python and databases.</p>"
+        ),
+        "https://example.com/contact": (
+            b"<title>Contact</title><h1>Contact</h1><p>Contact details.</p>"
+        ),
+    }
+
+    def fake_fetcher(url: str) -> tuple[str, bytes, str]:
+        return url, pages[url], "utf-8"
+
+    documents = crawl_website(
+        "https://example.com/start",
+        max_pages=3,
+        fetcher=fake_fetcher,
+    )
+
+    indexed_urls = {document.location.url for document in documents}
+    assert indexed_urls == {
+        "https://example.com/start",
+        "https://example.com/about",
+        "https://example.com/skills",
+    }
+    assert "https://external.example/page" not in indexed_urls
+
+
+@pytest.mark.parametrize("limit", [0, 11])
+def test_crawl_rejects_unsafe_page_limits(limit: int) -> None:
+    with pytest.raises(ValueError, match="between 1 and 10"):
+        crawl_website("https://example.com", max_pages=limit)

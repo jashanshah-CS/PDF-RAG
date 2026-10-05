@@ -9,7 +9,8 @@ tested before the next feature is added.
 ## Current features
 
 - Upload and search one or more text-based PDFs through a Streamlit interface
-- Add one approved public webpage and search it alongside uploaded PDFs
+- Add up to five linked pages from one approved public website and search them
+  alongside uploaded PDFs
 - Extract text while retaining the filename and page number
 - Represent extracted content with a source-neutral document model
 - Assign stable, content-based document identifiers and ingestion timestamps
@@ -50,8 +51,8 @@ Local Qwen3 8B answer with source labels
 
 Version 2 starts from the tested Version 1 pipeline. Its unified document and
 chunk models are the foundation for multiple PDFs, approved webpages, and CSV
-sources. The current interface can search multiple PDFs and one approved public
-webpage together.
+sources. The current interface can search multiple PDFs and up to five linked
+pages from one approved public website together.
 
 ## Requirements
 
@@ -134,8 +135,7 @@ are more useful than extended internal reasoning.
 - [x] Add stable document IDs, source locations, and ingestion timestamps
 - [x] Make embeddings, retrieval, generation, citations, and evaluation source-neutral
 - [x] Upload and search multiple PDFs together
-- [x] Ingest one approved public webpage
-- [ ] Extend website ingestion to a small same-domain page list
+- [x] Ingest up to five linked pages from one approved public website
 - [ ] Ingest CSV data and use structured querying for calculations
 - [ ] Evaluate PDF, website, CSV, cross-source, and unsupported questions
 
@@ -143,7 +143,8 @@ are more useful than extended internal reasoning.
 
 - Scanned or image-only PDFs are not supported yet because they require OCR.
 - Website ingestion supports static HTML only and does not execute JavaScript.
-- Only one explicitly entered public webpage is loaded; links are not crawled.
+- Website discovery follows only same-hostname HTML links and stops after five
+  unique pages.
 - The current embedding model is intended primarily for English text.
 - Answer quality depends on whether semantic search retrieves the right passage.
 - A small local model can still make mistakes, so the visible evidence and

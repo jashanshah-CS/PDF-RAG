@@ -2,6 +2,7 @@
 
 from collections.abc import Callable
 from datetime import UTC, datetime
+from hashlib import sha256
 from html.parser import HTMLParser
 from http.client import HTTPMessage
 from ipaddress import ip_address
@@ -9,7 +10,7 @@ import re
 import socket
 from typing import Protocol
 from urllib.error import HTTPError, URLError
-from urllib.parse import urldefrag, urljoin, urlsplit
+from urllib.parse import urldefrag, urljoin, urlsplit, urlunsplit
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 from src.rag_project.documents import (
@@ -23,6 +24,10 @@ from src.rag_project.documents import (
 MAX_WEBPAGE_BYTES = 2 * 1024 * 1024
 MAX_REDIRECTS = 3
 USER_AGENT = "Local-PDF-RAG/2.0"
+SKIPPED_LINK_SUFFIXES = {
+    ".csv", ".doc", ".docx", ".gif", ".jpeg", ".jpg", ".pdf", ".png",
+    ".ppt", ".pptx", ".svg", ".webp", ".xls", ".xlsx", ".zip",
+}
 
 
 class WebsiteLoadError(ValueError):
@@ -145,7 +150,7 @@ def fetch_public_html(
 class _ReadableHTMLParser(HTMLParser):
     """Collect page title and readable text grouped by headings."""
 
-    IGNORED_TAGS = {"script", "style", "noscript", "svg", "nav", "footer", "form"}
+    IGNORED_TAGS = {"script", "style", "noscript", "svg", "nav", "footer"}
     HEADING_TAGS = {"h1", "h2", "h3", "h4", "h5", "h6"}
 
     def __init__(self) -> None:
@@ -212,8 +217,67 @@ class _ReadableHTMLParser(HTMLParser):
         self._text_parts = []
 
 
+class _LinkParser(HTMLParser):
+    """Collect link targets without executing or following page instructions."""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.links: list[str] = []
+
+    def handle_starttag(self, tag: str, attrs) -> None:
+        if tag.lower() != "a":
+            return
+        href = dict(attrs).get("href")
+        if href:
+            self.links.append(href.strip())
+
+
 def _clean_text(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
+
+
+def extract_same_domain_links(
+    html_bytes: bytes,
+    base_url: str,
+    allowed_hostname: str,
+    *,
+    charset: str = "utf-8",
+) -> list[str]:
+    """Return unique, crawlable links that remain on the approved hostname."""
+    try:
+        html = html_bytes.decode(charset, errors="replace")
+    except LookupError as error:
+        raise WebsiteLoadError("The webpage uses an unsupported text encoding.") from error
+
+    parser = _LinkParser()
+    parser.feed(html)
+    parser.close()
+
+    links: list[str] = []
+    seen: set[str] = set()
+    for href in parser.links:
+        candidate, _ = urldefrag(urljoin(base_url, href))
+        try:
+            parsed = urlsplit(candidate)
+            _ = parsed.port
+        except ValueError:
+            continue
+        if parsed.scheme.lower() not in {"http", "https"}:
+            continue
+        if not parsed.hostname or parsed.hostname.rstrip(".").lower() != allowed_hostname:
+            continue
+        if parsed.username or parsed.password:
+            continue
+        if any(parsed.path.lower().endswith(suffix) for suffix in SKIPPED_LINK_SUFFIXES):
+            continue
+
+        normalized = urlunsplit(
+            (parsed.scheme.lower(), parsed.netloc.lower(), parsed.path or "/", "", "")
+        )
+        if normalized not in seen:
+            seen.add(normalized)
+            links.append(normalized)
+    return links
 
 
 def extract_website_documents(
@@ -261,3 +325,82 @@ def load_website(
     """Download one approved URL and convert it into unified documents."""
     final_url, content, charset = fetcher(url)
     return extract_website_documents(content, final_url, charset=charset)
+
+
+def crawl_website(
+    start_url: str,
+    *,
+    max_pages: int = 5,
+    fetcher: Callable[[str], tuple[str, bytes, str]] = fetch_public_html,
+) -> list[Document]:
+    """Load a bounded set of unique HTML pages from one approved hostname."""
+    if not 1 <= max_pages <= 10:
+        raise ValueError("Website page limit must be between 1 and 10.")
+
+    final_url, content, charset = fetcher(start_url)
+    root_hostname = (urlsplit(final_url).hostname or "").rstrip(".").lower()
+    if not root_hostname:
+        raise WebsiteLoadError("The website did not return a valid final URL.")
+
+    queue: list[tuple[str, bytes | None, str | None]] = [
+        (final_url, content, charset)
+    ]
+    queued_urls = {final_url}
+    visited_urls: set[str] = set()
+    seen_content: set[str] = set()
+    documents: list[Document] = []
+    indexed_pages = 0
+    fetch_limit = max_pages * 3
+    fetch_count = 1
+    ingestion_time = datetime.now(UTC)
+
+    while queue and indexed_pages < max_pages and fetch_count <= fetch_limit:
+        requested_url, queued_content, queued_charset = queue.pop(0)
+        if requested_url in visited_urls:
+            continue
+        visited_urls.add(requested_url)
+
+        if queued_content is None:
+            try:
+                page_url, page_content, page_charset = fetcher(requested_url)
+            except WebsiteLoadError:
+                continue
+            fetch_count += 1
+        else:
+            page_url = requested_url
+            page_content = queued_content
+            page_charset = queued_charset or "utf-8"
+
+        page_hostname = (urlsplit(page_url).hostname or "").rstrip(".").lower()
+        if page_hostname != root_hostname:
+            continue
+
+        content_fingerprint = sha256(page_content).hexdigest()
+        if content_fingerprint not in seen_content:
+            try:
+                page_documents = extract_website_documents(
+                    page_content,
+                    page_url,
+                    charset=page_charset,
+                    added_at=ingestion_time,
+                )
+            except WebsiteLoadError:
+                page_documents = []
+            if page_documents:
+                documents.extend(page_documents)
+                indexed_pages += 1
+                seen_content.add(content_fingerprint)
+
+        for link in extract_same_domain_links(
+            page_content,
+            page_url,
+            root_hostname,
+            charset=page_charset,
+        ):
+            if link not in queued_urls and link not in visited_urls:
+                queued_urls.add(link)
+                queue.append((link, None, None))
+
+    if not documents:
+        raise WebsiteLoadError("No readable pages were found on the website.")
+    return documents

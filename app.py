@@ -11,7 +11,7 @@ from src.rag_project.generator import (
 )
 from src.rag_project.pdf_loader import extract_pdf_files
 from src.rag_project.search import semantic_search
-from src.rag_project.website_loader import WebsiteLoadError, load_website
+from src.rag_project.website_loader import WebsiteLoadError, crawl_website
 
 
 @st.cache_resource(show_spinner=False)
@@ -22,8 +22,8 @@ def get_embedding_model():
 
 @st.cache_data(show_spinner=False, ttl=3600)
 def get_website_documents(url: str):
-    """Load an approved webpage once and reuse it across Streamlit reruns."""
-    return load_website(url)
+    """Load a bounded approved website once and reuse it across reruns."""
+    return crawl_website(url, max_pages=5)
 
 
 st.set_page_config(
@@ -185,9 +185,9 @@ with st.container(border=True):
                 "Public webpage URL",
                 value=st.session_state.get("website_source_url", ""),
                 placeholder="https://example.com/benefits",
-                help="Only one public HTTP(S) webpage is loaded; links are not crawled.",
+                help="Loads this page and up to four linked pages on the same hostname.",
             )
-            website_submitted = st.form_submit_button("Add website")
+            website_submitted = st.form_submit_button("Add website pages")
 
         if website_submitted:
             st.session_state["website_source_url"] = entered_website_url.strip()
@@ -231,7 +231,7 @@ except Exception as error:
     st.stop()
 
 if website_url:
-    with st.spinner("Downloading and extracting the approved webpage..."):
+    with st.spinner("Discovering and extracting up to five approved website pages..."):
         try:
             documents.extend(get_website_documents(website_url))
         except WebsiteLoadError as error:
@@ -262,6 +262,11 @@ source_count = len({document.document_id for document in documents})
 pdf_page_count = sum(
     document.location.page_number is not None for document in documents
 )
+website_pages = {
+    document.location.url
+    for document in documents
+    if document.location.url is not None
+}
 
 st.markdown('<div class="section-label">02 · Documents ready</div>', unsafe_allow_html=True)
 col1, col2, col3, col4, col5 = st.columns(5)
@@ -276,6 +281,10 @@ st.success(
     f"{source_count} {label} indexed successfully and ready for questions.",
     icon="✅",
 )
+if website_pages:
+    with st.expander(f"Website pages indexed ({len(website_pages)})"):
+        for page_url in sorted(website_pages):
+            st.markdown(f"- [{page_url}]({page_url})")
 
 with st.expander("Behind the scenes: chunks and embeddings"):
     st.write(
