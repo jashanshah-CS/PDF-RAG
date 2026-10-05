@@ -11,12 +11,19 @@ from src.rag_project.generator import (
 )
 from src.rag_project.pdf_loader import extract_pdf_files
 from src.rag_project.search import semantic_search
+from src.rag_project.website_loader import WebsiteLoadError, load_website
 
 
 @st.cache_resource(show_spinner=False)
 def get_embedding_model():
     """Load the model once and reuse it across Streamlit reruns."""
     return load_embedding_model()
+
+
+@st.cache_data(show_spinner=False, ttl=3600)
+def get_website_documents(url: str):
+    """Load an approved webpage once and reuse it across Streamlit reruns."""
+    return load_website(url)
 
 
 st.set_page_config(
@@ -140,7 +147,7 @@ with st.sidebar:
     st.caption("PRIVATE DOCUMENT Q&A")
     st.divider()
     st.markdown("**Pipeline**")
-    st.markdown("① Upload PDFs")
+    st.markdown("① Add PDFs or a webpage")
     st.markdown("② Extract & chunk")
     st.markdown("③ Hybrid search")
     st.markdown("④ Generate answer")
@@ -154,30 +161,52 @@ st.markdown(
     """
     <div class="hero">
         <div class="hero-kicker">Version 2 · Unified sources</div>
-        <h1>Ask your PDFs. Verify every answer.</h1>
-        <p>Search multiple documents together and get concise answers backed by filename and page-level evidence.</p>
+        <h1>Ask your sources. Verify every answer.</h1>
+        <p>Search PDFs and an approved webpage together, with answers backed by precise source evidence.</p>
         <span class="privacy-pill">● 100% local processing</span>
     </div>
     """,
     unsafe_allow_html=True,
 )
 
-st.markdown('<div class="section-label">01 · Documents</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-label">01 · Sources</div>', unsafe_allow_html=True)
 with st.container(border=True):
-    uploaded_files = st.file_uploader(
-        "Upload one or more text-based PDFs",
-        type=["pdf"],
-        accept_multiple_files=True,
-        help="PDFs are processed in memory and are not intentionally saved.",
-    )
+    pdf_tab, website_tab = st.tabs(["PDF documents", "Website"])
+    with pdf_tab:
+        uploaded_files = st.file_uploader(
+            "Upload one or more text-based PDFs",
+            type=["pdf"],
+            accept_multiple_files=True,
+            help="PDFs are processed in memory and are not intentionally saved.",
+        )
+    with website_tab:
+        with st.form("website_source_form"):
+            entered_website_url = st.text_input(
+                "Public webpage URL",
+                value=st.session_state.get("website_source_url", ""),
+                placeholder="https://example.com/benefits",
+                help="Only one public HTTP(S) webpage is loaded; links are not crawled.",
+            )
+            website_submitted = st.form_submit_button("Add website")
 
-if not uploaded_files:
-    st.info("Choose one or more PDFs above to prepare them for questions.", icon="↗️")
+        if website_submitted:
+            st.session_state["website_source_url"] = entered_website_url.strip()
+
+        website_url = st.session_state.get("website_source_url", "")
+        if website_url:
+            st.caption(f"Added website: {website_url}")
+            if st.button("Remove website", use_container_width=True):
+                st.session_state.pop("website_source_url", None)
+                st.rerun()
+
+website_url = st.session_state.get("website_source_url", "")
+if not uploaded_files and not website_url:
+    st.info("Upload PDFs or add a public webpage to begin.", icon="↗️")
     starter_1, starter_2, starter_3 = st.columns(3)
     with starter_1:
         with st.container(border=True):
             st.markdown("#### Private by design")
-            st.caption("PDF processing, search, and answer generation run locally.")
+            st.caption("PDF processing and AI stay local; webpages are downloaded from their URL.")
     with starter_2:
         with st.container(border=True):
             st.markdown("#### Source-backed")
@@ -185,27 +214,39 @@ if not uploaded_files:
     with starter_3:
         with st.container(border=True):
             st.markdown("#### Easy to inspect")
-            st.caption("Open retrieved chunks and original page text at any time.")
+            st.caption("Open retrieved chunks and extracted source text at any time.")
     st.stop()
 
+documents = []
 try:
-    pages = extract_pdf_files(
-        (uploaded_file.name, uploaded_file.getvalue())
-        for uploaded_file in uploaded_files
-    )
+    if uploaded_files:
+        documents.extend(
+            extract_pdf_files(
+                (uploaded_file.name, uploaded_file.getvalue())
+                for uploaded_file in uploaded_files
+            )
+        )
 except Exception as error:
     st.error(f"I could not read the uploaded PDFs: {error}")
     st.stop()
 
-if not pages:
+if website_url:
+    with st.spinner("Downloading and extracting the approved webpage..."):
+        try:
+            documents.extend(get_website_documents(website_url))
+        except WebsiteLoadError as error:
+            st.error(f"I could not add that website: {error}")
+            st.stop()
+
+if not documents:
     st.warning(
-        "No selectable text was found. The files may be scanned PDFs; "
+        "No readable text was found. Uploaded files may be scanned PDFs; "
         "image-based PDFs will need OCR in a later step."
     )
     st.stop()
 
-word_count = sum(len(page.text.split()) for page in pages)
-chunks = chunk_documents(pages)
+word_count = sum(len(document.text.split()) for document in documents)
+chunks = chunk_documents(documents)
 
 with st.spinner("Creating local embeddings..."):
     try:
@@ -217,19 +258,22 @@ with st.spinner("Creating local embeddings..."):
 embedding_dimensions = (
     len(embedded_chunks[0].embedding) if embedded_chunks else 0
 )
-document_count = len({page.document_id for page in pages})
+source_count = len({document.document_id for document in documents})
+pdf_page_count = sum(
+    document.location.page_number is not None for document in documents
+)
 
 st.markdown('<div class="section-label">02 · Documents ready</div>', unsafe_allow_html=True)
 col1, col2, col3, col4, col5 = st.columns(5)
-col1.metric("Documents", document_count)
-col2.metric("Pages with text", len(pages))
+col1.metric("Sources", source_count)
+col2.metric("PDF pages", pdf_page_count)
 col3.metric("Approximate words", f"{word_count:,}")
 col4.metric("Searchable chunks", len(chunks))
 col5.metric("Embedding dimensions", embedding_dimensions)
 
-label = "document" if document_count == 1 else "documents"
+label = "source" if source_count == 1 else "sources"
 st.success(
-    f"{document_count} {label} indexed successfully and ready for questions.",
+    f"{source_count} {label} indexed successfully and ready for questions.",
     icon="✅",
 )
 
@@ -246,12 +290,12 @@ with st.expander("Behind the scenes: chunks and embeddings"):
         str([round(value, 4) for value in embedded_chunks[0].embedding[:8]])
     )
 
-st.markdown('<div class="section-label">03 · Ask your documents</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-label">03 · Ask your sources</div>', unsafe_allow_html=True)
 st.subheader("What would you like to know?")
 
 with st.form("semantic_search_form"):
     question = st.text_input(
-        "Ask a question about these documents",
+        "Ask a question about these sources",
         placeholder="For example: What is the annual leave policy?",
     )
     search_submitted = st.form_submit_button("Ask with Qwen3 8B  →")
@@ -289,11 +333,13 @@ if search_submitted:
                 )
                 st.caption(f"Semantic similarity · {result.score:.3f}")
                 st.write(chunk.text)
+                if chunk.location.url:
+                    st.link_button("Open webpage", chunk.location.url)
 
 st.markdown('<div class="section-label">04 · Inspect</div>', unsafe_allow_html=True)
 st.subheader("Document details")
 
-chunk_tab, page_tab = st.tabs(["Searchable chunks", "Original page text"])
+chunk_tab, page_tab = st.tabs(["Searchable chunks", "Extracted source text"])
 
 with chunk_tab:
     for chunk in chunks:
@@ -303,8 +349,10 @@ with chunk_tab:
             st.write(chunk.text)
 
 with page_tab:
-    for page in pages:
+    for document in documents:
         with st.expander(
-            f"{page.location.label().title()} · {page.source_name}"
+            f"{document.location.label()} · {document.source_name}"
         ):
-            st.text(page.text)
+            st.text(document.text)
+            if document.location.url:
+                st.link_button("Open original webpage", document.location.url)

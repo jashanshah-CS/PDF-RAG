@@ -22,8 +22,8 @@ supports the answer. Evidence blocks from consecutive pages or chunks may be one
 continuous section, so combine them when their metadata shows adjacency. Use no
 outside knowledge. Do not mix attributes from different projects, roles, or
 sections. Answer every part of the question and inspect all evidence, including
-document headers, before refusing. Only when none of the evidence supports an
-answer, say: "I cannot find this in the supplied document." Answer in a complete
+source headers, before refusing. Only when none of the evidence supports an
+answer, say: "I cannot find this in the supplied sources." Answer in a complete
 sentence that restates the subject and key terms from the evidence."""
 
 ANSWER_SCHEMA = {
@@ -92,11 +92,13 @@ def build_evidence(results: list[SearchResult]) -> str:
             if adjacent_sources
             else ""
         )
+        url_line = f"URL: {chunk.location.url}\n" if chunk.location.url else ""
         blocks.append(
             f"[Source {source_number}]\n"
             f"Source type: {chunk.source_type.value}\n"
             f"Source: {chunk.source_name}\n"
             f"Location: {chunk.location.label()}\n"
+            f"{url_line}"
             f"Chunk: {chunk.chunk_number}\n"
             f"Text: {chunk.text}"
             f"{relationship}"

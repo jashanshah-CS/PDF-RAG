@@ -40,6 +40,28 @@ def test_evidence_contains_source_labels_and_page_metadata() -> None:
     assert "Location: page 7" in evidence
 
 
+def test_evidence_contains_website_url() -> None:
+    chunk = DocumentChunk(
+        document_id="website-benefits",
+        source_type=SourceType.WEBSITE,
+        source_name="Employee Benefits",
+        chunk_number=1,
+        text="Employees receive 25 days.",
+        location=SourceLocation(
+            url="https://example.com/benefits",
+            section="Annual leave",
+        ),
+        added_at=datetime(2026, 10, 5, tzinfo=UTC),
+    )
+    evidence = build_evidence(
+        [SearchResult(EmbeddedChunk(chunk, (1.0, 0.0)), 0.8)]
+    )
+
+    assert "Source type: website" in evidence
+    assert "Location: Annual leave" in evidence
+    assert "URL: https://example.com/benefits" in evidence
+
+
 def test_generation_sends_grounded_non_streaming_chat_request() -> None:
     captured_payload = {}
 

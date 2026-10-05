@@ -9,6 +9,7 @@ tested before the next feature is added.
 ## Current features
 
 - Upload and search one or more text-based PDFs through a Streamlit interface
+- Add one approved public webpage and search it alongside uploaded PDFs
 - Extract text while retaining the filename and page number
 - Represent extracted content with a source-neutral document model
 - Assign stable, content-based document identifiers and ingestion timestamps
@@ -32,7 +33,7 @@ It is downloaded once and stored in the local `.model-cache` directory.
 ## How it currently works
 
 ```text
-PDF upload
+PDF uploads and approved webpage
     ↓
 Unified documents with source metadata
     ↓
@@ -49,7 +50,8 @@ Local Qwen3 8B answer with source labels
 
 Version 2 starts from the tested Version 1 pipeline. Its unified document and
 chunk models are the foundation for multiple PDFs, approved webpages, and CSV
-sources. The current interface can search multiple PDFs together.
+sources. The current interface can search multiple PDFs and one approved public
+webpage together.
 
 ## Requirements
 
@@ -132,13 +134,16 @@ are more useful than extended internal reasoning.
 - [x] Add stable document IDs, source locations, and ingestion timestamps
 - [x] Make embeddings, retrieval, generation, citations, and evaluation source-neutral
 - [x] Upload and search multiple PDFs together
-- [ ] Ingest an approved website or small list of pages
+- [x] Ingest one approved public webpage
+- [ ] Extend website ingestion to a small same-domain page list
 - [ ] Ingest CSV data and use structured querying for calculations
 - [ ] Evaluate PDF, website, CSV, cross-source, and unsupported questions
 
 ## Limitations
 
 - Scanned or image-only PDFs are not supported yet because they require OCR.
+- Website ingestion supports static HTML only and does not execute JavaScript.
+- Only one explicitly entered public webpage is loaded; links are not crawled.
 - The current embedding model is intended primarily for English text.
 - Answer quality depends on whether semantic search retrieves the right passage.
 - A small local model can still make mistakes, so the visible evidence and
