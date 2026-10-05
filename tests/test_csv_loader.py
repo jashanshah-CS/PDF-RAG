@@ -123,6 +123,27 @@ def test_looks_up_one_row_without_model_arithmetic() -> None:
     assert answer.citations[0].label() == "offices.csv — row 3"
 
 
+def test_lists_every_distinct_column_value_instead_of_using_top_k_search() -> None:
+    department_table = load_csv_file(
+        b"office,department\n"
+        b"London,Operations\n"
+        b"Manchester,Customer Support\n"
+        b"Birmingham,Logistics\n"
+        b"Leeds,Operations\n",
+        "departments.csv",
+    )
+    answer = answer_csv_question(
+        "Give me all the departments in this file",
+        [department_table],
+    )
+
+    assert answer is not None
+    assert answer.answer == (
+        "The department values are: Operations, Customer Support, Logistics."
+    )
+    assert [citation.row_number for citation in answer.citations] == [2, 3, 4]
+
+
 def test_unknown_question_falls_back_to_semantic_search() -> None:
     assert answer_csv_question("Describe the available office data", [table()]) is None
 
