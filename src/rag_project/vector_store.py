@@ -10,9 +10,10 @@ from chromadb.config import Settings
 
 from src.rag_project.documents import DocumentChunk, SourceLocation, SourceType
 from src.rag_project.embeddings import EmbeddedChunk
+from src.rag_project.config import SETTINGS
 
 
-DEFAULT_STORE_PATH = Path(__file__).resolve().parents[2] / "data" / "chroma-v2"
+DEFAULT_STORE_PATH = SETTINGS.chroma_path
 COLLECTION_NAME = "rag_sources"
 
 

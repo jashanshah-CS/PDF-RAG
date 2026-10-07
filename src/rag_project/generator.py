@@ -2,17 +2,17 @@
 
 from collections.abc import Callable
 import json
-import os
 import re
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from src.rag_project.search import SearchResult
+from src.rag_project.config import SETTINGS
 
 
-OLLAMA_CHAT_URL = "http://localhost:11434/api/chat"
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen3:8b")
+OLLAMA_CHAT_URL = SETTINGS.ollama_chat_url
+OLLAMA_MODEL = SETTINGS.ollama_model
 
 SYSTEM_PROMPT = """You are a document question-answering assistant.
 Use the factual content in the supplied source evidence to answer the question.

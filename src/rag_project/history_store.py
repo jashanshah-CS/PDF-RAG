@@ -9,9 +9,10 @@ import sqlite3
 from uuid import uuid4
 
 from src.rag_project.search import SearchResult
+from src.rag_project.config import SETTINGS
 
 
-DEFAULT_HISTORY_PATH = Path(__file__).resolve().parents[2] / "data" / "history.db"
+DEFAULT_HISTORY_PATH = SETTINGS.history_path
 
 
 @dataclass(frozen=True)

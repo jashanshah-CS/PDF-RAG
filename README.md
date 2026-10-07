@@ -100,6 +100,74 @@ uv run streamlit run app.py
 Open `http://localhost:8501` if the browser does not open automatically.
 The first PDF upload may take longer while the free embedding model downloads.
 
+## Run with Docker Compose
+
+Docker is the recommended deployment for Version 2 because it packages the app,
+Tesseract OCR, Ollama, Qwen3 8B, and persistent local storage together.
+
+Requirements:
+
+- Docker Desktop on Windows or macOS, or Docker Engine with Compose on Linux;
+- at least 12 GB of available memory recommended for Qwen3 8B plus embeddings;
+- several gigabytes of free disk space for container images and model files.
+
+Start from a fresh clone:
+
+```powershell
+Copy-Item .env.example .env
+docker compose up --build
+```
+
+Open `http://localhost:8501`. The first start takes longer because Compose pulls
+the Ollama image, downloads `qwen3:8b`, builds the Python application, and caches
+the MiniLM embedding model. Later starts reuse all three named volumes.
+
+Stop the services without deleting documents, history, or models:
+
+```powershell
+docker compose down
+```
+
+Start them again with:
+
+```powershell
+docker compose up
+```
+
+The Compose services are:
+
+- `app`: Streamlit, the RAG code, ChromaDB, SQLite, and Tesseract OCR;
+- `ollama`: the local model server, reachable only inside the Compose network;
+- `ollama-model`: a one-time setup job that ensures the configured model exists.
+
+The named volumes are:
+
+- `rag-data`: ChromaDB indexes and SQLite question history;
+- `embedding-model`: the downloaded MiniLM embedding model;
+- `ollama-models`: Qwen and other Ollama model files.
+
+Do not run `docker compose down --volumes` unless you intentionally want to
+delete all three persistent volumes.
+
+### Configuration
+
+Copy `.env.example` to `.env` and change only the values you need:
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `OLLAMA_MODEL` | `qwen3:8b` | Local chat model used for answers and review |
+| `OLLAMA_CHAT_URL` | `http://localhost:11434/api/chat` | Ollama API for non-Docker runs; Compose overrides it |
+| `MAX_UPLOAD_MB` | `200` | Maximum uploaded file size |
+| `RAG_DATA_DIR` | `data` | Parent directory for ChromaDB and SQLite |
+| `MODEL_CACHE` | `.model-cache` | Sentence-transformer download cache |
+| `EMBEDDING_LOCAL_ONLY` | `false` | Prevent downloads only when the model is already cached |
+| `TESSERACT_CMD` | auto-detected | Optional custom Tesseract executable for local Windows runs |
+
+The sidebar's **System status** panel checks writable storage, Ollama connectivity,
+the configured Ollama model, Tesseract, and the Python environment. Storage
+failure stops the app with an actionable message; Ollama and optional OCR issues
+remain visible so document management can still be used.
+
 ## Run the tests
 
 ```powershell

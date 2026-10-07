@@ -1,7 +1,6 @@
 """Create local semantic embeddings for source-neutral document chunks."""
 
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Protocol
 
 import numpy as np
@@ -9,10 +8,11 @@ from numpy.typing import NDArray
 from sentence_transformers import SentenceTransformer
 
 from src.rag_project.documents import DocumentChunk
+from src.rag_project.config import SETTINGS
 
 
-MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
-MODEL_CACHE = Path(__file__).resolve().parents[2] / ".model-cache"
+MODEL_NAME = SETTINGS.embedding_model
+MODEL_CACHE = SETTINGS.model_cache
 
 
 class TextEncoder(Protocol):
@@ -38,12 +38,12 @@ class EmbeddedChunk:
 
 def load_embedding_model() -> SentenceTransformer:
     """Load the free embedding model on the CPU and cache it locally."""
-    MODEL_CACHE.mkdir(exist_ok=True)
+    MODEL_CACHE.mkdir(parents=True, exist_ok=True)
     return SentenceTransformer(
         MODEL_NAME,
         device="cpu",
         cache_folder=str(MODEL_CACHE),
-        local_files_only=True,
+        local_files_only=SETTINGS.embedding_local_only,
     )
 
 

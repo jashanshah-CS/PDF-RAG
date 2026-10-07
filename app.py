@@ -21,6 +21,7 @@ from src.rag_project.vector_store import (
     website_source_key,
 )
 from src.rag_project.history_store import QuestionHistoryStore
+from src.rag_project.startup import run_startup_checks
 
 
 @st.cache_resource(show_spinner=False)
@@ -39,6 +40,12 @@ def get_vector_store():
 def get_history_store():
     """Open the readable local SQLite question history."""
     return QuestionHistoryStore()
+
+
+@st.cache_data(ttl=30, show_spinner=False)
+def get_startup_checks():
+    """Recheck local services periodically and present actionable status."""
+    return run_startup_checks()
 
 
 def render_history(section_number: str) -> None:
@@ -211,6 +218,20 @@ with st.sidebar:
     st.divider()
     st.markdown("Add your documents, choose what to search, and ask a question.")
     st.caption("Your documents and questions stay on this computer.")
+    with st.expander("System status"):
+        for check in get_startup_checks():
+            icon = "✅" if check.ok else ("⚠️" if not check.required else "❌")
+            st.markdown(f"{icon} **{check.name}**")
+            st.caption(check.message)
+
+startup_checks = get_startup_checks()
+storage_failure = next(
+    (check for check in startup_checks if check.name == "Storage" and not check.ok),
+    None,
+)
+if storage_failure:
+    st.error(f"The app cannot start because local storage is unavailable: {storage_failure.message}")
+    st.stop()
 
 st.markdown(
     """
