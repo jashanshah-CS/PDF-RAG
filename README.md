@@ -115,6 +115,13 @@ PDFs are in `output/pdf/quality-test-10/`, its questions are in
 with `scripts/create_ten_quality_test_pdfs.py`. The latest local Qwen3 8B run
 passed all 10 questions with an average response time of 8.13 seconds.
 
+The harder benchmark in `evaluation/quality_test_10_hard.csv` covers unsupported
+questions, near-duplicate numbers, cross-document comparisons, conflicting
+policies, and misspellings. The latest deterministic Qwen3 8B run passes 8 of
+10 cases. Its detailed output is saved in
+`evaluation/quality_test_10_hard_results.csv`; the retained failures document
+current limitations rather than being removed from the benchmark.
+
 Copy `evaluation/questions.example.csv` to `evaluation/questions.csv`, then
 replace the examples with questions about your PDFs and approved website.
 
@@ -244,6 +251,8 @@ complex tables, so OCR-labelled evidence should be checked against the source.
 - Answer quality depends on whether semantic search retrieves the right passage.
 - A small local model can still make mistakes, so the visible evidence and
   citations should always be checked.
+- Severe misspellings can cause an answerable question to be refused, and a
+  multi-document question may occasionally answer only one requested part.
 - Extracted PDF text and embeddings persist locally, but the original PDF file
   is not retained. Refreshing a PDF therefore requires uploading it again.
 

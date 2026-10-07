@@ -84,8 +84,11 @@ def test_generation_sends_grounded_non_streaming_chat_request() -> None:
     assert captured_payload["stream"] is False
     assert captured_payload["think"] is False
     assert captured_payload["format"]["required"] == ["answer", "source_numbers"]
-    assert captured_payload["options"]["temperature"] == 0.1
+    assert captured_payload["options"]["temperature"] == 0.0
     assert "outside knowledge" in captured_payload["messages"][0]["content"]
+    assert "exact attribute requested" in captured_payload["messages"][0]["content"]
+    assert "address each one separately" in captured_payload["messages"][0]["content"]
+    assert "obvious spelling mistakes" in captured_payload["messages"][0]["content"]
     assert "Location: page 4" in captured_payload["messages"][1]["content"]
 
 
