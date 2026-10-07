@@ -9,6 +9,7 @@ from src.rag_project.generator import (
     build_evidence,
     generate_grounded_answer,
     is_refusal_answer,
+    needs_completeness_check,
     supporting_source,
 )
 from src.rag_project.search import SearchResult
@@ -138,6 +139,74 @@ def test_generation_can_cite_multiple_model_selected_sources() -> None:
         "Project Orion uses forecasting and Jashan likes databases. "
         "[Source 1] [Source 2]"
     )
+
+
+def test_multi_part_question_is_reviewed_and_rewritten_once() -> None:
+    results = [
+        result("Falcon meets within 30 minutes.", 1),
+        result("Bluebird updates every 30 minutes.", 2),
+    ]
+    responses = iter(
+        [
+            {"message": {"content": '{"answer":"Falcon meets within 30 minutes.","source_numbers":[1]}'}},
+            {"message": {"content": '{"complete":true,"answer":"Falcon meets within 30 minutes and Bluebird updates every 30 minutes.","source_numbers":[1,2]}'}},
+        ]
+    )
+
+    answer = generate_grounded_answer(
+        "What happens in Falcon and Bluebird?",
+        results,
+        send_request=lambda payload: next(responses),
+    )
+
+    assert answer.endswith("[Source 1] [Source 2]")
+    assert "Bluebird updates every 30 minutes" in answer
+
+
+def test_incomplete_multi_part_retry_returns_safe_refusal() -> None:
+    responses = iter(
+        [
+            {"message": {"content": '{"answer":"Only one part.","source_numbers":[1]}'}},
+            {"message": {"content": '{"complete":false,"answer":"One part has no evidence.","source_numbers":[1]}'}},
+        ]
+    )
+
+    answer = generate_grounded_answer(
+        "Compare policy A and policy B.",
+        [result("Only policy A is documented.", 1)],
+        send_request=lambda payload: next(responses),
+    )
+
+    assert answer == "I cannot find a complete answer in the supplied sources."
+
+
+def test_initial_refusal_is_reviewed_once_for_obvious_misspelling() -> None:
+    responses = iter(
+        [
+            {"message": {"content": '{"answer":"I cannot find this in the supplied sources.","source_numbers":[]}'}},
+            {"message": {"content": '{"complete":true,"answer":"Visitors wear a yellow badge.","source_numbers":[1]}'}},
+        ]
+    )
+
+    answer = generate_grounded_answer(
+        "wat colur bage do visters need?",
+        [result("Visitors must wear a yellow badge.", 1)],
+        send_request=lambda payload: next(responses),
+    )
+
+    assert answer == "Visitors wear a yellow badge. [Source 1]"
+
+
+@pytest.mark.parametrize(
+    "question",
+    [
+        "Compare Atlas and Harbour.",
+        "What applies across both policies?",
+        "Who is eligible and how long is the course?",
+    ],
+)
+def test_detects_multi_part_questions(question: str) -> None:
+    assert needs_completeness_check(question) is True
 
 
 def test_generation_rejects_answer_that_cannot_be_grounded() -> None:

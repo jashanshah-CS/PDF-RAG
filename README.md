@@ -163,6 +163,14 @@ The chat request sets Ollama's `think` option to `false`. This avoids long
 reasoning traces for models such as Qwen3, where short evidence-based answers
 are more useful than extended internal reasoning.
 
+Multi-part questions receive one additional deterministic completeness review.
+The reviewer checks every requested source, entity, condition, and sub-question
+against the retrieved evidence. It rewrites an incomplete draft once, or returns
+a safe refusal when the available evidence cannot support a complete answer.
+Initial refusals also receive this single review so obvious spelling mistakes can
+be reconsidered without repeatedly calling the model. Simple supported questions
+remain single-pass.
+
 ## Local database
 
 Version 2 uses **ChromaDB** as an embedded vector database. It runs inside the
