@@ -108,6 +108,13 @@ uv run pytest -q
 
 ## Evaluate Version 2
 
+The repository includes a reproducible ten-document quality benchmark. Its
+PDFs are in `output/pdf/quality-test-10/`, its questions are in
+`evaluation/quality_test_10.csv`, and its latest detailed results are in
+`evaluation/quality_test_10_results.csv`. Regenerate the fictional documents
+with `scripts/create_ten_quality_test_pdfs.py`. The latest local Qwen3 8B run
+passed all 10 questions with an average response time of 8.13 seconds.
+
 Copy `evaluation/questions.example.csv` to `evaluation/questions.csv`, then
 replace the examples with questions about your PDFs and approved website.
 
