@@ -1,0 +1,11 @@
+question,expected_keywords,expected_sources,expected_pages,expected_urls,should_refuse
+Which weekdays must Aurora employees attend their assigned office?,Tuesdays|Thursdays,aurora_remote_work_policy.pdf,1,,false
+What is the initial response time for a Bluebird priority-one incident?,15 minutes,bluebird_customer_support_handbook.pdf,1,,false
+How many quotations are required for a Coral purchase above GBP 5000?,three written supplier quotations,coral_procurement_rules.pdf,1,,false
+How long are unsuccessful applicant records kept by Delta?,12 months,delta_data_retention_schedule.pdf,1,,false
+Who can attend Ember's Cloud Foundations course and how long is it?,all permanent employees|three,ember_training_catalogue.pdf,1,,false
+What are the recovery time and recovery point objectives for Falcon's payments service?,two hours|15 minutes,falcon_business_continuity_plan.pdf,1,,false
+What emissions reduction does Greenwood target by December 2030?,46 percent|2022 baseline,greenwood_sustainability_plan.pdf,1,,false
+What mileage rate does Harbour pay for the first 10000 miles?,45 pence per mile,harbour_expenses_guide.pdf,1,,false
+What approvals and recovery preparation are required for an Indigo production release?,Quality Assurance|service owner|tested rollback plan|20 minutes,indigo_product_release_process.pdf,1,,false
+What colour badge must Juniper visitors wear and where do they assemble during evacuation?,yellow badge|north car park,juniper_visitor_safety_guide.pdf,1,,false

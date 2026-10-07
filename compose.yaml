@@ -1,0 +1,49 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    volumes:
+      - ollama-models:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  ollama-model:
+    image: ollama/ollama:latest
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    entrypoint: ["/bin/ollama"]
+    command: ["pull", "${OLLAMA_MODEL:-qwen3:8b}"]
+    volumes:
+      - ollama-models:/root/.ollama
+    restart: "no"
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      ollama-model:
+        condition: service_completed_successfully
+    ports:
+      - "8501:8501"
+    environment:
+      OLLAMA_CHAT_URL: http://ollama:11434/api/chat
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen3:8b}
+      MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-200}
+      STREAMLIT_SERVER_MAX_UPLOAD_SIZE: ${MAX_UPLOAD_MB:-200}
+      RAG_DATA_DIR: /app/data
+      MODEL_CACHE: /app/.model-cache
+      EMBEDDING_LOCAL_ONLY: "false"
+    volumes:
+      - rag-data:/app/data
+      - embedding-model:/app/.model-cache
+
+volumes:
+  rag-data:
+  embedding-model:
+  ollama-models:

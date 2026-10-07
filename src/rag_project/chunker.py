@@ -1,26 +1,14 @@
-"""Split extracted PDF pages into searchable passages."""
+"""Split unified documents into searchable passages."""
 
-from dataclasses import dataclass
-
-from src.rag_project.pdf_loader import PdfPage
+from src.rag_project.documents import Document, DocumentChunk
 
 
-@dataclass(frozen=True)
-class PdfChunk:
-    """One searchable passage with the metadata needed for a citation."""
-
-    document_name: str
-    page_number: int
-    chunk_number: int
-    text: str
-
-
-def chunk_pdf_pages(
-    pages: list[PdfPage],
+def chunk_documents(
+    documents: list[Document],
     chunk_size: int = 150,
     overlap: int = 30,
-) -> list[PdfChunk]:
-    """Split every page into word-based chunks with a shared overlap."""
+) -> list[DocumentChunk]:
+    """Split source records into word-based chunks with a shared overlap."""
     if chunk_size <= 0:
         raise ValueError("Chunk size must be greater than zero.")
     if overlap < 0:
@@ -28,11 +16,11 @@ def chunk_pdf_pages(
     if overlap >= chunk_size:
         raise ValueError("Overlap must be smaller than chunk size.")
 
-    chunks: list[PdfChunk] = []
+    chunks: list[DocumentChunk] = []
     step = chunk_size - overlap
 
-    for page in pages:
-        words = page.text.split()
+    for document in documents:
+        words = document.text.split()
 
         for chunk_number, start in enumerate(range(0, len(words), step), start=1):
             chunk_words = words[start : start + chunk_size]
@@ -40,9 +28,8 @@ def chunk_pdf_pages(
                 continue
 
             chunks.append(
-                PdfChunk(
-                    document_name=page.document_name,
-                    page_number=page.page_number,
+                DocumentChunk.from_document(
+                    document,
                     chunk_number=chunk_number,
                     text=" ".join(chunk_words),
                 )
@@ -52,3 +39,12 @@ def chunk_pdf_pages(
                 break
 
     return chunks
+
+
+def chunk_pdf_pages(
+    pages: list[Document],
+    chunk_size: int = 150,
+    overlap: int = 30,
+) -> list[DocumentChunk]:
+    """Backward-compatible name for chunking extracted PDF pages."""
+    return chunk_documents(pages, chunk_size, overlap)

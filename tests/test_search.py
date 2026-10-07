@@ -1,7 +1,8 @@
 import numpy as np
 import pytest
+from datetime import UTC, datetime
 
-from src.rag_project.chunker import PdfChunk
+from src.rag_project.documents import DocumentChunk, SourceLocation, SourceType
 from src.rag_project.embeddings import EmbeddedChunk
 from src.rag_project.search import semantic_search
 
@@ -22,9 +23,21 @@ class QueryModel:
         return np.array([[1.0, 0.0]], dtype=np.float32)
 
 
-def embedded(text: str, vector: tuple[float, ...]) -> EmbeddedChunk:
+def embedded(
+    text: str,
+    vector: tuple[float, ...],
+    source_name: str = "handbook.pdf",
+) -> EmbeddedChunk:
     return EmbeddedChunk(
-        chunk=PdfChunk("handbook.pdf", 1, 1, text),
+        chunk=DocumentChunk(
+            document_id="pdf-handbook",
+            source_type=SourceType.PDF,
+            source_name=source_name,
+            chunk_number=1,
+            text=text,
+            location=SourceLocation(page_number=1),
+            added_at=datetime(2026, 10, 5, tzinfo=UTC),
+        ),
         embedding=vector,
     )
 
@@ -57,3 +70,41 @@ def test_semantic_search_rejects_invalid_result_count() -> None:
 
 def test_semantic_search_returns_empty_list_when_there_are_no_chunks() -> None:
     assert semantic_search("holiday allowance", [], QueryModel()) == []
+
+
+def test_exact_policy_terms_break_close_semantic_ties() -> None:
+    class ExpenseQueryModel:
+        def encode(self, sentences, **kwargs):
+            return np.array([[1.0, 0.0]], dtype=np.float32)
+
+    chunks = [
+        embedded("Gifts must be declared within five working days.", (0.81, 0.0)),
+        embedded("Expense receipts must be submitted within 30 days.", (0.80, 0.0)),
+    ]
+
+    results = semantic_search(
+        "When must an expense receipt be submitted?", chunks, ExpenseQueryModel()
+    )
+
+    assert results[0].embedded_chunk.chunk.text.startswith("Expense receipts")
+
+
+def test_source_name_gives_later_document_page_title_context() -> None:
+    class EqualSemanticModel:
+        def encode(self, sentences, **kwargs):
+            return np.array([[1.0, 0.0]], dtype=np.float32)
+
+    chunks = [
+        embedded("Project history and education.", (1.0, 0.0)),
+        embedded(
+            "Success measures are 12 and 92 percent.",
+            (1.0, 0.0),
+            source_name="project_orion_brief.pdf",
+        ),
+    ]
+
+    results = semantic_search(
+        "Project Orion success measures", chunks, EqualSemanticModel(), top_k=1
+    )
+
+    assert results[0].embedded_chunk.chunk.text.startswith("Success measures")

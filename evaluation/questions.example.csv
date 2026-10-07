@@ -1,0 +1,5 @@
+question,expected_keywords,expected_sources,expected_pages,expected_urls,should_refuse
+Replace this with a PDF question,keyword1|keyword2,handbook.pdf,1,,false
+Replace this with a website question,expected phrase,Page title,,https://example.com/page,false
+Replace this with a cross-source question,term from PDF|term from website,handbook.pdf|Page title,2,https://example.com/page,false
+Replace this with an unsupported question,,,,,true

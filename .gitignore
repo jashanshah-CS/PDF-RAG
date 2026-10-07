@@ -19,6 +19,13 @@ data/
 uploads/
 *.pdf
 
+# Local evaluation inputs and generated reports
+evaluation/questions*.csv
+!evaluation/questions.example.csv
+evaluation/results*.csv
+output/*.log
+tmp/
+
 # Editors and operating systems
 .idea/
 .vscode/
