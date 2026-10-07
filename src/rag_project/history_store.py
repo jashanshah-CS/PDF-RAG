@@ -35,6 +35,7 @@ class HistoryEntry:
     answer: str
     citations: tuple[HistoryCitation, ...]
     created_at: datetime
+    selected_sources: tuple[str, ...] = ()
 
 
 def _answer_citations(
@@ -83,10 +84,22 @@ class QuestionHistoryStore:
                     question TEXT NOT NULL,
                     answer TEXT NOT NULL,
                     citations_json TEXT NOT NULL,
-                    created_at TEXT NOT NULL
+                    created_at TEXT NOT NULL,
+                    selected_sources_json TEXT NOT NULL DEFAULT '[]'
                 )
                 """
             )
+            columns = {
+                str(row["name"])
+                for row in connection.execute(
+                    "PRAGMA table_info(question_history)"
+                ).fetchall()
+            }
+            if "selected_sources_json" not in columns:
+                connection.execute(
+                    "ALTER TABLE question_history ADD COLUMN "
+                    "selected_sources_json TEXT NOT NULL DEFAULT '[]'"
+                )
             connection.execute(
                 "CREATE INDEX IF NOT EXISTS idx_history_created_at "
                 "ON question_history(created_at DESC)"
@@ -99,6 +112,7 @@ class QuestionHistoryStore:
         results: list[SearchResult],
         *,
         created_at: datetime | None = None,
+        selected_sources: tuple[str, ...] = (),
     ) -> HistoryEntry:
         """Save one successful answer and the sources it actually cited."""
         if not question.strip() or not answer.strip():
@@ -112,16 +126,25 @@ class QuestionHistoryStore:
             answer=answer.strip(),
             citations=_answer_citations(answer, results),
             created_at=timestamp,
+            selected_sources=tuple(
+                dict.fromkeys(source.strip() for source in selected_sources if source.strip())
+            ),
         )
         with self._connect() as connection:
             connection.execute(
-                "INSERT INTO question_history VALUES (?, ?, ?, ?, ?)",
+                """
+                INSERT INTO question_history (
+                    entry_id, question, answer, citations_json, created_at,
+                    selected_sources_json
+                ) VALUES (?, ?, ?, ?, ?, ?)
+                """,
                 (
                     entry.entry_id,
                     entry.question,
                     entry.answer,
                     json.dumps([asdict(citation) for citation in entry.citations]),
                     entry.created_at.isoformat(),
+                    json.dumps(entry.selected_sources),
                 ),
             )
         return entry
@@ -158,6 +181,7 @@ class QuestionHistoryStore:
                     "question": entry.question,
                     "answer": entry.answer,
                     "citations": [asdict(citation) for citation in entry.citations],
+                    "selected_sources": list(entry.selected_sources),
                     "created_at": entry.created_at.isoformat(),
                 }
             )
@@ -175,4 +199,7 @@ class QuestionHistoryStore:
             answer=str(row["answer"]),
             citations=citations,
             created_at=datetime.fromisoformat(str(row["created_at"])),
+            selected_sources=tuple(
+                json.loads(str(row["selected_sources_json"] or "[]"))
+            ),
         )

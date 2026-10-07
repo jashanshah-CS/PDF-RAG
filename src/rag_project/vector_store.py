@@ -40,6 +40,17 @@ def website_source_key(root_url: str) -> str:
     return f"website:{root_url.strip().rstrip('/').casefold()}"
 
 
+def filter_chunks_by_source_keys(
+    chunks: list[EmbeddedChunk], source_keys: set[str]
+) -> list[EmbeddedChunk]:
+    """Return only chunks belonging to the explicitly selected sources."""
+    return [
+        item
+        for item in chunks
+        if item.chunk.metadata.get("source_key") in source_keys
+    ]
+
+
 def _chunk_id(source_key: str, chunk: DocumentChunk) -> str:
     location = chunk.location
     position = location.url or str(location.page_number or location.row_number or 0)
@@ -128,6 +139,7 @@ class PersistentVectorStore:
         ):
             source_type = SourceType(str(metadata["source_type"]))
             extra_metadata: dict[str, Any] = {}
+            extra_metadata["source_key"] = str(metadata["source_key"])
             root_url = metadata.get("root_url")
             if root_url:
                 extra_metadata["root_url"] = str(root_url)

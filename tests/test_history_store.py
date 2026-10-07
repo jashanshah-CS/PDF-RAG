@@ -27,6 +27,7 @@ def test_history_survives_reopening_and_saves_used_citations(tmp_path) -> None:
         "Employees receive 29 days. [Source 2]",
         [result("other.pdf", 1), result("benefits.pdf", 4)],
         created_at=datetime(2026, 10, 7, 12, 0, tzinfo=UTC),
+        selected_sources=("PDF · benefits.pdf",),
     )
 
     entries = QuestionHistoryStore(path).list()
@@ -35,6 +36,7 @@ def test_history_survives_reopening_and_saves_used_citations(tmp_path) -> None:
     assert entries[0].question == "How much leave?"
     assert entries[0].citations[0].source_name == "benefits.pdf"
     assert entries[0].citations[0].page_number == 4
+    assert entries[0].selected_sources == ("PDF · benefits.pdf",)
 
 
 def test_history_search_export_and_clear(tmp_path) -> None:
@@ -47,6 +49,7 @@ def test_history_search_export_and_clear(tmp_path) -> None:
 
     assert [entry.question for entry in matches] == ["Leave question"]
     assert '"source_name": "benefits.pdf"' in exported
+    assert '"selected_sources"' in exported
     store.clear()
     assert store.list() == []
 
@@ -65,3 +68,31 @@ def test_history_rejects_naive_timestamp(tmp_path) -> None:
         assert "timezone" in str(error)
     else:
         raise AssertionError("A naive timestamp should be rejected")
+
+
+def test_existing_history_database_is_migrated_without_losing_rows(tmp_path) -> None:
+    import sqlite3
+
+    path = tmp_path / "old-history.db"
+    with sqlite3.connect(path) as connection:
+        connection.execute(
+            """
+            CREATE TABLE question_history (
+                entry_id TEXT PRIMARY KEY,
+                question TEXT NOT NULL,
+                answer TEXT NOT NULL,
+                citations_json TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            )
+            """
+        )
+        connection.execute(
+            "INSERT INTO question_history VALUES (?, ?, ?, ?, ?)",
+            ("old", "Old question", "Old answer", "[]", "2026-10-07T12:00:00+00:00"),
+        )
+
+    entries = QuestionHistoryStore(path).list()
+
+    assert len(entries) == 1
+    assert entries[0].question == "Old question"
+    assert entries[0].selected_sources == ()

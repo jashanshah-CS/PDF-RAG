@@ -16,6 +16,7 @@ from src.rag_project.search import semantic_search
 from src.rag_project.website_loader import WebsiteLoadError, crawl_website
 from src.rag_project.vector_store import (
     PersistentVectorStore,
+    filter_chunks_by_source_keys,
     pdf_source_key,
     website_source_key,
 )
@@ -72,14 +73,6 @@ def render_history(section_number: str) -> None:
         local_time = entry.created_at.astimezone().strftime("%d %b %Y %H:%M")
         with st.expander(f"{local_time} · {entry.question}"):
             st.markdown(entry.answer)
-            if entry.citations:
-                st.caption("Cited sources")
-                for citation in entry.citations:
-                    label = f"{citation.source_name} · {citation.location}"
-                    if citation.url:
-                        st.markdown(f"- [{label}]({citation.url})")
-                    else:
-                        st.markdown(f"- {label}")
 
     with st.expander("History controls"):
         confirmed = st.checkbox(
@@ -216,24 +209,15 @@ with st.sidebar:
     st.markdown("## ✦ Local PDF AI")
     st.caption("PRIVATE DOCUMENT Q&A")
     st.divider()
-    st.markdown("**Pipeline**")
-    st.markdown("① Add PDFs or a webpage")
-    st.markdown("② Extract & chunk")
-    st.markdown("③ Save in local ChromaDB")
-    st.markdown("④ Hybrid search")
-    st.markdown("⑤ Generate & verify")
-    st.markdown("⑥ Save answer history in SQLite")
-    st.divider()
-    st.caption("ACTIVE MODEL")
-    st.code(OLLAMA_MODEL, language=None)
+    st.markdown("Add your documents, choose what to search, and ask a question.")
     st.caption("Your documents and questions stay on this computer.")
 
 st.markdown(
     """
     <div class="hero">
         <div class="hero-kicker">Version 2 · Unified sources</div>
-        <h1>Ask your sources. Verify every answer.</h1>
-        <p>Search PDFs and an approved webpage together, with answers backed by precise source evidence.</p>
+        <h1>Ask your documents.</h1>
+        <p>Search your PDFs and approved webpages together and get a clear answer.</p>
         <span class="privacy-pill">● 100% local processing</span>
     </div>
     """,
@@ -249,8 +233,8 @@ with st.container(border=True):
             type=["pdf"],
             accept_multiple_files=True,
             help=(
-                "PDF text and embeddings are saved locally. Uploading a changed "
-                "PDF with the same filename replaces its previous index."
+                "Your PDF is saved locally. Uploading a changed PDF with the "
+                "same filename replaces its previous version."
             ),
         )
         index_pdfs = st.button(
@@ -270,7 +254,7 @@ with st.container(border=True):
 store = get_vector_store()
 
 if index_pdfs and uploaded_files:
-    with st.spinner("Extracting, embedding, and saving PDFs locally..."):
+    with st.spinner("Processing and saving PDFs locally..."):
         try:
             for uploaded_file in uploaded_files:
                 pdf_documents = extract_pdf_files(
@@ -295,7 +279,7 @@ if website_submitted:
     if not website_url:
         st.warning("Enter a public website URL first.")
     else:
-        with st.spinner("Crawling, embedding, and saving website pages..."):
+        with st.spinner("Processing and saving website pages..."):
             try:
                 website_documents = [
                     replace(
@@ -318,32 +302,6 @@ if website_submitted:
                 st.error(f"I could not index that website: {error}")
 
 stored_sources = store.list_sources()
-if stored_sources:
-    st.markdown("#### Saved sources")
-    st.caption("These sources load automatically whenever the app starts.")
-    for source in stored_sources:
-        details = (
-            f"{source.location_count} locations · {source.chunk_count} chunks · "
-            f"added {source.added_at.astimezone().strftime('%d %b %Y %H:%M')}"
-        )
-        ocr_chunk_count = getattr(source, "ocr_chunk_count", 0)
-        if ocr_chunk_count:
-            details += f" · {ocr_chunk_count} OCR chunks"
-        source_col, remove_col = st.columns([5, 1])
-        with source_col:
-            icon = "🌐" if source.root_url else "📄"
-            st.markdown(f"{icon} **{source.source_name}**")
-            st.caption(source.root_url or details)
-            if source.root_url:
-                st.caption(details)
-        with remove_col:
-            if st.button(
-                "Remove",
-                key=f"remove-{source.source_key}",
-                use_container_width=True,
-            ):
-                store.delete_source(source.source_key)
-                st.rerun()
 
 embedded_chunks = store.load_all()
 if not embedded_chunks:
@@ -355,86 +313,74 @@ if not embedded_chunks:
             st.caption("PDF processing and AI stay local; webpages are downloaded from their URL.")
     with starter_2:
         with st.container(border=True):
-            st.markdown("#### Source-backed")
-            st.caption("Every generated answer points to the evidence used.")
+            st.markdown("#### Ask naturally")
+            st.caption("Ask in plain language and receive a clear answer.")
     with starter_3:
         with st.container(border=True):
-            st.markdown("#### Easy to inspect")
-            st.caption("Saved sources return automatically after an app restart.")
+            st.markdown("#### Saved locally")
+            st.caption("Your documents return automatically after an app restart.")
     render_history("02")
     st.stop()
 
-chunks = [item.chunk for item in embedded_chunks]
-word_count = sum(len(chunk.text.split()) for chunk in chunks)
+st.success("Your documents are ready for questions.", icon="✅")
 
-embedding_dimensions = (
-    len(embedded_chunks[0].embedding) if embedded_chunks else 0
-)
-source_count = len(stored_sources)
-pdf_page_count = sum(
-    source.location_count
-    for source in stored_sources
-    if source.source_type.value == "pdf"
-)
-website_pages = {
-    chunk.location.url
-    for chunk in chunks
-    if chunk.location.url is not None
-}
-
-ocr_page_count = len(
-    {
-        (chunk.document_id, chunk.location.page_number)
-        for chunk in chunks
-        if chunk.metadata.get("extraction_method") == "ocr"
-    }
-)
-
-st.markdown('<div class="section-label">02 · Documents ready</div>', unsafe_allow_html=True)
-col1, col2, col3, col4, col5, col6 = st.columns(6)
-col1.metric("Sources", source_count)
-col2.metric("PDF pages", pdf_page_count)
-col3.metric("Approximate words", f"{word_count:,}")
-col4.metric("Searchable chunks", len(chunks))
-col5.metric("Embedding dimensions", embedding_dimensions)
-col6.metric("OCR pages", ocr_page_count)
-
-label = "source" if source_count == 1 else "sources"
-st.success(
-    f"{source_count} saved {label} loaded from local ChromaDB and ready for questions.",
-    icon="✅",
-)
-if website_pages:
-    with st.expander(f"Website pages indexed ({len(website_pages)})"):
-        for page_url in sorted(website_pages):
-            st.markdown(f"- [{page_url}]({page_url})")
-
-with st.expander("Behind the scenes: chunks and embeddings"):
-    st.write(
-        "Each chunk contains up to 150 words, with a 30-word overlap between "
-        "neighbours so important context is less likely to be split."
-    )
-    st.write(
-        "Each chunk is represented by 384 numbers. Here are the first "
-        "eight numbers for the first chunk:"
-    )
-    st.code(
-        str([round(value, 4) for value in embedded_chunks[0].embedding[:8]])
-    )
-
-st.markdown('<div class="section-label">03 · Ask your sources</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-label">02 · Ask a question</div>', unsafe_allow_html=True)
 st.subheader("What would you like to know?")
+
+available_source_keys = [source.source_key for source in stored_sources]
+source_labels = {
+    source.source_key: (
+        f"{'Website' if source.root_url else 'PDF'} · {source.source_name}"
+    )
+    for source in stored_sources
+}
+selection_key = "selected_source_keys"
+if selection_key not in st.session_state:
+    st.session_state[selection_key] = available_source_keys
+else:
+    st.session_state[selection_key] = [
+        key
+        for key in st.session_state[selection_key]
+        if key in available_source_keys
+    ]
+
+select_all_col, clear_selection_col = st.columns(2)
+if select_all_col.button("Select all sources", use_container_width=True):
+    st.session_state[selection_key] = available_source_keys
+    st.rerun()
+if clear_selection_col.button("Clear source selection", use_container_width=True):
+    st.session_state[selection_key] = []
+    st.rerun()
+
+selected_source_keys = st.multiselect(
+    "Sources to search",
+    options=available_source_keys,
+    format_func=lambda key: source_labels[key],
+    key=selection_key,
+    help="Only selected sources can contribute retrieved evidence or answers.",
+)
+selected_source_names = tuple(
+    source_labels[key] for key in selected_source_keys
+)
+if not selected_source_names:
+    st.warning("Select at least one source before asking a question.")
+
+searchable_chunks = filter_chunks_by_source_keys(
+    embedded_chunks, set(selected_source_keys)
+)
 
 with st.form("semantic_search_form"):
     question = st.text_input(
         "Ask a question about these sources",
         placeholder="For example: What is the annual leave policy?",
     )
-    search_submitted = st.form_submit_button("Ask with Qwen3 8B  →")
+    search_submitted = st.form_submit_button(
+        "Ask with Qwen3 8B  →", disabled=not searchable_chunks
+    )
 
 if search_submitted:
     try:
-        results = semantic_search(question, embedded_chunks, get_embedding_model())
+        results = semantic_search(question, searchable_chunks, get_embedding_model())
     except ValueError as error:
         st.warning(str(error))
     else:
@@ -447,46 +393,16 @@ if search_submitted:
                 st.error(str(error))
             else:
                 try:
-                    get_history_store().add(question, answer, results)
+                    get_history_store().add(
+                        question,
+                        answer,
+                        results,
+                        selected_sources=selected_source_names,
+                    )
                 except Exception as error:
                     st.warning(f"The answer was created but history could not be saved: {error}")
                 st.markdown('<div class="section-label">Answer</div>', unsafe_allow_html=True)
                 with st.container(border=True):
                     st.markdown(f"### {answer}")
 
-        st.markdown('<div class="section-label">Evidence</div>', unsafe_allow_html=True)
-        st.subheader("Sources used for this answer")
-        st.caption(
-            "These are the five passages retrieved before answer generation."
-        )
-
-        for rank, result in enumerate(results, start=1):
-            chunk = result.embedded_chunk.chunk
-            with st.container(border=True):
-                st.markdown(
-                    f"**Source {rank}: {chunk.citation_label()}, "
-                    f"chunk {chunk.chunk_number}**"
-                )
-                st.caption(f"Semantic similarity · {result.score:.3f}")
-                st.write(chunk.text)
-                if chunk.location.url:
-                    st.link_button("Open webpage", chunk.location.url)
-
-render_history("04")
-
-st.markdown('<div class="section-label">05 · Inspect</div>', unsafe_allow_html=True)
-st.subheader("Document details")
-
-for chunk in chunks:
-    method_label = (
-        " · OCR" if chunk.metadata.get("extraction_method") == "ocr" else ""
-    )
-    with st.expander(
-        f"{chunk.source_name} · {chunk.location.label()} · "
-        f"chunk {chunk.chunk_number}{method_label}"
-    ):
-        st.write(chunk.text)
-        if method_label:
-            st.caption("Text recognized locally from the page image using Tesseract OCR.")
-        if chunk.location.url:
-            st.link_button("Open original webpage", chunk.location.url)
+render_history("03")

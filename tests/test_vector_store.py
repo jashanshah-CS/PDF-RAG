@@ -6,6 +6,7 @@ from src.rag_project.documents import DocumentChunk, SourceLocation, SourceType
 from src.rag_project.embeddings import EmbeddedChunk
 from src.rag_project.vector_store import (
     PersistentVectorStore,
+    filter_chunks_by_source_keys,
     pdf_source_key,
     website_source_key,
 )
@@ -75,6 +76,35 @@ def test_store_preserves_ocr_metadata(tmp_path) -> None:
 
     assert restored[0].chunk.metadata["extraction_method"] == "ocr"
     assert sources[0].ocr_chunk_count == 1
+
+
+def test_filter_excludes_chunks_from_unselected_sources() -> None:
+    selected = embedded("Selected source")
+    excluded = embedded("Excluded source", name="private.pdf")
+    selected = EmbeddedChunk(
+        DocumentChunk(
+            **{
+                **selected.chunk.__dict__,
+                "metadata": {"source_key": "pdf:selected.pdf"},
+            }
+        ),
+        selected.embedding,
+    )
+    excluded = EmbeddedChunk(
+        DocumentChunk(
+            **{
+                **excluded.chunk.__dict__,
+                "metadata": {"source_key": "pdf:private.pdf"},
+            }
+        ),
+        excluded.embedding,
+    )
+
+    filtered = filter_chunks_by_source_keys(
+        [selected, excluded], {"pdf:selected.pdf"}
+    )
+
+    assert [item.chunk.text for item in filtered] == ["Selected source"]
 
 
 def test_lists_and_deletes_website_crawl_as_one_source(tmp_path) -> None:

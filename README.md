@@ -25,6 +25,7 @@ tested before the next feature is added.
 - Search, inspect, export, and clear question history through the interface
 - Search for the five chunks most relevant to a natural-language question
   using combined semantic similarity and exact-term matching
+- Select exactly which saved PDFs and websites may be searched for each question
 - Show similarity scores and page-level source information
 - Generate an evidence-grounded answer with local Qwen3 8B through Ollama
 - Support alternative Ollama chat models with reasoning disabled for fast document Q&A
@@ -181,6 +182,11 @@ SQLite history in `data/history.db`, including each successful question, answer,
 its cited sources, and the creation time. Both databases are local and excluded
 from Git.
 
+Each history entry also records the sources that were selected when the question
+was asked. This is distinct from citations: the selected-source list shows the
+allowed search scope, while citations show which retrieved sources actually
+supported the final answer.
+
 ## Scanned PDFs and OCR
 
 OCR means **Optical Character Recognition**. A scanned PDF usually contains a
@@ -218,6 +224,7 @@ complex tables, so OCR-labelled evidence should be checked against the source.
 - [x] Reload, update, refresh, list, and remove indexed sources
 - [x] Persist searchable question, answer, citation, and timestamp history
 - [x] Recognize image-only PDF pages locally with Tesseract OCR
+- [x] Filter retrieval to user-selected PDF and website sources
 
 ## Limitations
 
