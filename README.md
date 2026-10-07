@@ -19,6 +19,8 @@ tested before the next feature is added.
 - Persist chunks, embeddings, and citation metadata in local ChromaDB storage
 - Automatically reload indexed sources after restarting the application
 - Add, update, refresh, and remove saved PDF and website sources
+- Save questions, answers, citations, and timestamps in local SQLite history
+- Search, inspect, export, and clear question history through the interface
 - Search for the five chunks most relevant to a natural-language question
   using combined semantic similarity and exact-term matching
 - Show similarity scores and page-level source information
@@ -52,6 +54,8 @@ Hybrid semantic and exact-term search
 Top five evidence chunks
     ↓
 Local Qwen3 8B answer with source labels
+    ↓
+Readable question history in data/history.db
 ```
 
 Version 2 starts from the tested Version 1 pipeline. Its unified document and
@@ -153,6 +157,20 @@ same filename replaces its existing chunks. Adding the same website start URL
 again recrawls its pages and replaces the previous crawl. The **Saved sources**
 section can remove either source type and all of its indexed chunks.
 
+### Why ChromaDB and SQLite are separate
+
+ChromaDB is used for source retrieval because it is a vector database: it can
+store embedding arrays alongside text and metadata, then support similarity
+search as the source collection grows. These records represent the current
+searchable knowledge index rather than a chronological conversation.
+
+SQLite is used for question history because questions and answers are ordinary,
+ordered records. It provides reliable transactions, timestamps, text filtering,
+and portable exports without encoding conversations as vectors. The app stores
+SQLite history in `data/history.db`, including each successful question, answer,
+its cited sources, and the creation time. Both databases are local and excluded
+from Git.
+
 ## Version 1 roadmap
 
 - [x] Upload and extract one PDF
@@ -174,6 +192,7 @@ section can remove either source type and all of its indexed chunks.
 - [x] Evaluate PDF, website, cross-source, and unsupported questions
 - [x] Persist embeddings and source metadata with local ChromaDB
 - [x] Reload, update, refresh, list, and remove indexed sources
+- [x] Persist searchable question, answer, citation, and timestamp history
 
 ## Limitations
 

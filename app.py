@@ -19,6 +19,7 @@ from src.rag_project.vector_store import (
     pdf_source_key,
     website_source_key,
 )
+from src.rag_project.history_store import QuestionHistoryStore
 
 
 @st.cache_resource(show_spinner=False)
@@ -31,6 +32,68 @@ def get_embedding_model():
 def get_vector_store():
     """Open the persistent local ChromaDB collection once per app process."""
     return PersistentVectorStore()
+
+
+@st.cache_resource(show_spinner=False)
+def get_history_store():
+    """Open the readable local SQLite question history."""
+    return QuestionHistoryStore()
+
+
+def render_history(section_number: str) -> None:
+    """Render searchable, exportable question-and-answer history."""
+    history_store = get_history_store()
+    st.markdown(
+        f'<div class="section-label">{section_number} · History</div>',
+        unsafe_allow_html=True,
+    )
+    st.subheader("Previous questions and answers")
+    search = st.text_input(
+        "Search history",
+        placeholder="Search questions or answers",
+        key=f"history-search-{section_number}",
+    )
+    entries = history_store.list(search)
+    history_col, export_col = st.columns([3, 1])
+    history_col.caption(
+        f"{len(entries)} saved {'entry' if len(entries) == 1 else 'entries'} shown"
+    )
+    export_col.download_button(
+        "Export history",
+        data=history_store.export_json(),
+        file_name="rag-question-history.json",
+        mime="application/json",
+        use_container_width=True,
+    )
+
+    if not entries:
+        st.info("No matching question history yet.")
+    for entry in entries:
+        local_time = entry.created_at.astimezone().strftime("%d %b %Y %H:%M")
+        with st.expander(f"{local_time} · {entry.question}"):
+            st.markdown(entry.answer)
+            if entry.citations:
+                st.caption("Cited sources")
+                for citation in entry.citations:
+                    label = f"{citation.source_name} · {citation.location}"
+                    if citation.url:
+                        st.markdown(f"- [{label}]({citation.url})")
+                    else:
+                        st.markdown(f"- {label}")
+
+    with st.expander("History controls"):
+        confirmed = st.checkbox(
+            "I understand this permanently deletes all saved questions and answers.",
+            key=f"clear-history-confirm-{section_number}",
+        )
+        if st.button(
+            "Clear question history",
+            disabled=not confirmed,
+            key=f"clear-history-{section_number}",
+            use_container_width=True,
+        ):
+            history_store.clear()
+            st.rerun()
 
 
 st.set_page_config(
@@ -159,6 +222,7 @@ with st.sidebar:
     st.markdown("③ Save in local ChromaDB")
     st.markdown("④ Hybrid search")
     st.markdown("⑤ Generate & verify")
+    st.markdown("⑥ Save answer history in SQLite")
     st.divider()
     st.caption("ACTIVE MODEL")
     st.code(OLLAMA_MODEL, language=None)
@@ -294,6 +358,7 @@ if not embedded_chunks:
         with st.container(border=True):
             st.markdown("#### Easy to inspect")
             st.caption("Saved sources return automatically after an app restart.")
+    render_history("02")
     st.stop()
 
 chunks = [item.chunk for item in embedded_chunks]
@@ -369,6 +434,10 @@ if search_submitted:
             except (OllamaError, ValueError) as error:
                 st.error(str(error))
             else:
+                try:
+                    get_history_store().add(question, answer, results)
+                except Exception as error:
+                    st.warning(f"The answer was created but history could not be saved: {error}")
                 st.markdown('<div class="section-label">Answer</div>', unsafe_allow_html=True)
                 with st.container(border=True):
                     st.markdown(f"### {answer}")
@@ -391,7 +460,9 @@ if search_submitted:
                 if chunk.location.url:
                     st.link_button("Open webpage", chunk.location.url)
 
-st.markdown('<div class="section-label">04 · Inspect</div>', unsafe_allow_html=True)
+render_history("04")
+
+st.markdown('<div class="section-label">05 · Inspect</div>', unsafe_allow_html=True)
 st.subheader("Document details")
 
 for chunk in chunks:
