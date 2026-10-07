@@ -18,6 +18,7 @@ def embedded(
     page: int | None = 1,
     url: str | None = None,
     root_url: str | None = None,
+    extraction_method: str | None = None,
 ) -> EmbeddedChunk:
     source_type = SourceType.WEBSITE if url else SourceType.PDF
     chunk = DocumentChunk(
@@ -28,7 +29,14 @@ def embedded(
         text=text,
         location=SourceLocation(page_number=page if not url else None, url=url),
         added_at=datetime(2026, 10, 6, 10, 30, tzinfo=UTC),
-        metadata={"root_url": root_url} if root_url else {},
+        metadata={
+            key: value
+            for key, value in {
+                "root_url": root_url,
+                "extraction_method": extraction_method,
+            }.items()
+            if value
+        },
     )
     return EmbeddedChunk(chunk, (0.1, 0.2, 0.3))
 
@@ -53,6 +61,20 @@ def test_reupload_replaces_pdf_with_same_filename(tmp_path) -> None:
     store.replace_source(key, [embedded("New policy")])
 
     assert [item.chunk.text for item in store.load_all()] == ["New policy"]
+
+
+def test_store_preserves_ocr_metadata(tmp_path) -> None:
+    store = PersistentVectorStore(tmp_path / "chroma")
+    store.replace_source(
+        pdf_source_key("scan.pdf"),
+        [embedded("Recognized text", name="scan.pdf", extraction_method="ocr")],
+    )
+
+    restored = store.load_all()
+    sources = store.list_sources()
+
+    assert restored[0].chunk.metadata["extraction_method"] == "ocr"
+    assert sources[0].ocr_chunk_count == 1
 
 
 def test_lists_and_deletes_website_crawl_as_one_source(tmp_path) -> None:

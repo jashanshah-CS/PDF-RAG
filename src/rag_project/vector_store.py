@@ -26,6 +26,7 @@ class StoredSource:
     added_at: datetime
     chunk_count: int
     location_count: int
+    ocr_chunk_count: int
     root_url: str | None = None
 
 
@@ -66,6 +67,9 @@ def _metadata(source_key: str, chunk: DocumentChunk) -> dict[str, Any]:
     root_url = chunk.metadata.get("root_url")
     if isinstance(root_url, str) and root_url:
         metadata["root_url"] = root_url
+    extraction_method = chunk.metadata.get("extraction_method")
+    if extraction_method in {"text", "ocr"}:
+        metadata["extraction_method"] = extraction_method
     return metadata
 
 
@@ -127,6 +131,9 @@ class PersistentVectorStore:
             root_url = metadata.get("root_url")
             if root_url:
                 extra_metadata["root_url"] = str(root_url)
+            extraction_method = metadata.get("extraction_method")
+            if extraction_method:
+                extra_metadata["extraction_method"] = str(extraction_method)
             chunk = DocumentChunk(
                 document_id=str(metadata["document_id"]),
                 source_type=source_type,
@@ -184,6 +191,10 @@ class PersistentVectorStore:
                     ),
                     chunk_count=len(entries),
                     location_count=len(locations),
+                    ocr_chunk_count=sum(
+                        entry.get("extraction_method") == "ocr"
+                        for entry in entries
+                    ),
                     root_url=(
                         str(first["root_url"])
                         if first.get("root_url")

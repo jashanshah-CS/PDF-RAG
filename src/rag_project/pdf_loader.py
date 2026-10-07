@@ -12,6 +12,10 @@ from src.rag_project.documents import (
     SourceType,
     create_document_id,
 )
+from src.rag_project.ocr import ocr_pdf_page
+
+
+MIN_EXTRACTED_CHARACTERS = 20
 
 
 def extract_pdf_pages(
@@ -31,6 +35,12 @@ def extract_pdf_pages(
 
     for page_number, page in enumerate(reader.pages, start=1):
         text = (page.extract_text() or "").strip()
+        extraction_method = "text"
+        if len(text) < MIN_EXTRACTED_CHARACTERS:
+            ocr_text = ocr_pdf_page(pdf_bytes, page_number - 1)
+            if len(ocr_text) > len(text):
+                text = ocr_text
+                extraction_method = "ocr"
         if text:
             pages.append(
                 Document(
@@ -40,7 +50,10 @@ def extract_pdf_pages(
                     text=text,
                     location=SourceLocation(page_number=page_number),
                     added_at=ingestion_time,
-                    metadata={"media_type": "application/pdf"},
+                    metadata={
+                        "media_type": "application/pdf",
+                        "extraction_method": extraction_method,
+                    },
                 )
             )
 

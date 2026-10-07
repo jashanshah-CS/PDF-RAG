@@ -326,6 +326,8 @@ if stored_sources:
             f"{source.location_count} locations · {source.chunk_count} chunks · "
             f"added {source.added_at.astimezone().strftime('%d %b %Y %H:%M')}"
         )
+        if source.ocr_chunk_count:
+            details += f" · {source.ocr_chunk_count} OCR chunks"
         source_col, remove_col = st.columns([5, 1])
         with source_col:
             icon = "🌐" if source.root_url else "📄"
@@ -379,13 +381,22 @@ website_pages = {
     if chunk.location.url is not None
 }
 
+ocr_page_count = len(
+    {
+        (chunk.document_id, chunk.location.page_number)
+        for chunk in chunks
+        if chunk.metadata.get("extraction_method") == "ocr"
+    }
+)
+
 st.markdown('<div class="section-label">02 · Documents ready</div>', unsafe_allow_html=True)
-col1, col2, col3, col4, col5 = st.columns(5)
+col1, col2, col3, col4, col5, col6 = st.columns(6)
 col1.metric("Sources", source_count)
 col2.metric("PDF pages", pdf_page_count)
 col3.metric("Approximate words", f"{word_count:,}")
 col4.metric("Searchable chunks", len(chunks))
 col5.metric("Embedding dimensions", embedding_dimensions)
+col6.metric("OCR pages", ocr_page_count)
 
 label = "source" if source_count == 1 else "sources"
 st.success(
@@ -466,9 +477,15 @@ st.markdown('<div class="section-label">05 · Inspect</div>', unsafe_allow_html=
 st.subheader("Document details")
 
 for chunk in chunks:
+    method_label = (
+        " · OCR" if chunk.metadata.get("extraction_method") == "ocr" else ""
+    )
     with st.expander(
-        f"{chunk.source_name} · {chunk.location.label()} · chunk {chunk.chunk_number}"
+        f"{chunk.source_name} · {chunk.location.label()} · "
+        f"chunk {chunk.chunk_number}{method_label}"
     ):
         st.write(chunk.text)
+        if method_label:
+            st.caption("Text recognized locally from the page image using Tesseract OCR.")
         if chunk.location.url:
             st.link_button("Open original webpage", chunk.location.url)

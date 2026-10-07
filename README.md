@@ -12,6 +12,8 @@ tested before the next feature is added.
 - Add up to five linked pages from one approved public website and search them
   alongside uploaded PDFs
 - Extract text while retaining the filename and page number
+- Detect image-only PDF pages and recognize them locally with Tesseract OCR
+- Label OCR-derived chunks so recognized text is distinguishable in the UI
 - Represent extracted content with a source-neutral document model
 - Assign stable, content-based document identifiers and ingestion timestamps
 - Split pages into chunks of up to 150 words with a 30-word overlap
@@ -41,7 +43,9 @@ It is downloaded once and stored in the local `.model-cache` directory.
 ```text
 PDF uploads and approved webpage
     ↓
-Unified documents with source metadata
+Selectable-text extraction or local Tesseract OCR
+    ↓
+Unified documents with source metadata and extraction method
     ↓
 Source-neutral chunks with inherited metadata
     ↓
@@ -76,6 +80,12 @@ Install the default local chat model before starting the app:
 ```powershell
 ollama pull qwen3:8b
 ```
+
+Scanned PDF support also requires the local
+[`Tesseract OCR`](https://github.com/tesseract-ocr/tesseract) engine. On Windows,
+the project supports the standard UB Mannheim installation location, a
+`tesseract` executable on `PATH`, or a custom executable configured with
+`TESSERACT_CMD`.
 
 ## Run locally
 
@@ -171,6 +181,20 @@ SQLite history in `data/history.db`, including each successful question, answer,
 its cited sources, and the creation time. Both databases are local and excluded
 from Git.
 
+## Scanned PDFs and OCR
+
+OCR means **Optical Character Recognition**. A scanned PDF usually contains a
+photograph of text rather than selectable characters, so ordinary PDF text
+extraction returns nothing. For each page with fewer than 20 extracted
+characters, the app renders that page at 200 DPI and asks the local Tesseract
+engine to recognize its words. The resulting text retains the original PDF
+filename and page number, then follows the same chunking, embedding, ChromaDB,
+retrieval, and citation pipeline as normal text.
+
+Tesseract runs locally and does not upload page images. OCR can still make
+mistakes on handwriting, low-resolution scans, skewed pages, unusual fonts, or
+complex tables, so OCR-labelled evidence should be checked against the source.
+
 ## Version 1 roadmap
 
 - [x] Upload and extract one PDF
@@ -193,10 +217,12 @@ from Git.
 - [x] Persist embeddings and source metadata with local ChromaDB
 - [x] Reload, update, refresh, list, and remove indexed sources
 - [x] Persist searchable question, answer, citation, and timestamp history
+- [x] Recognize image-only PDF pages locally with Tesseract OCR
 
 ## Limitations
 
-- Scanned or image-only PDFs are not supported yet because they require OCR.
+- OCR is limited to English in the current version.
+- Handwriting, damaged scans, and complex layouts may reduce OCR accuracy.
 - Website ingestion supports static HTML only and does not execute JavaScript.
 - Website discovery follows only same-hostname HTML links and stops after five
   unique pages.
