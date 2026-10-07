@@ -26,7 +26,7 @@ class StoredSource:
     added_at: datetime
     chunk_count: int
     location_count: int
-    ocr_chunk_count: int
+    ocr_chunk_count: int = 0
     root_url: str | None = None
 
 

@@ -326,8 +326,9 @@ if stored_sources:
             f"{source.location_count} locations · {source.chunk_count} chunks · "
             f"added {source.added_at.astimezone().strftime('%d %b %Y %H:%M')}"
         )
-        if source.ocr_chunk_count:
-            details += f" · {source.ocr_chunk_count} OCR chunks"
+        ocr_chunk_count = getattr(source, "ocr_chunk_count", 0)
+        if ocr_chunk_count:
+            details += f" · {ocr_chunk_count} OCR chunks"
         source_col, remove_col = st.columns([5, 1])
         with source_col:
             icon = "🌐" if source.root_url else "📄"
