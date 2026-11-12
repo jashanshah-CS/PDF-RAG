@@ -12,7 +12,7 @@ from src.rag_project.generator import (
     generate_grounded_answer,
 )
 from src.rag_project.pdf_loader import extract_pdf_files
-from src.rag_project.search import semantic_search
+from src.rag_project.search import SearchResult, semantic_search
 from src.rag_project.website_loader import WebsiteLoadError, crawl_website
 from src.rag_project.vector_store import (
     PersistentVectorStore,
@@ -20,8 +20,14 @@ from src.rag_project.vector_store import (
     pdf_source_key,
     website_source_key,
 )
-from src.rag_project.history_store import QuestionHistoryStore
+from src.rag_project.history_store import HistoryCitation, QuestionHistoryStore
+from src.rag_project.citations import cited_source_numbers
 from src.rag_project.startup import run_startup_checks
+from src.rag_project.source_selection import reconcile_source_selection
+
+
+SOURCE_SELECTION_KEY = "selected_source_keys"
+SOURCE_SELECTION_UI_VERSION = 2
 
 
 @st.cache_resource(show_spinner=False)
@@ -46,6 +52,49 @@ def get_history_store():
 def get_startup_checks():
     """Recheck local services periodically and present actionable status."""
     return run_startup_checks()
+
+
+def render_answer_sources(answer: str, results: list[SearchResult]) -> None:
+    """Render the evidence actually cited by an answer as expandable cards."""
+    source_numbers = cited_source_numbers(answer, len(results))
+    if not source_numbers:
+        return
+    st.markdown(
+        '<div class="citation-intro"><strong>Sources used</strong>'
+        '<span>Select a source to view the supporting passage.</span></div>',
+        unsafe_allow_html=True,
+    )
+    for number in source_numbers:
+        chunk = results[number - 1].embedded_chunk.chunk
+        source_type = "Webpage" if chunk.location.url else "PDF"
+        with st.expander(f"Source {number} · {chunk.source_name}"):
+            st.caption(f"{source_type} · {chunk.location.label()}")
+            st.write(chunk.text)
+            if chunk.location.url:
+                st.link_button(
+                    "Open original webpage ↗",
+                    chunk.location.url,
+                    use_container_width=True,
+                )
+
+
+def render_saved_sources(citations: tuple[HistoryCitation, ...]) -> None:
+    """Render saved citation evidence inside a history entry."""
+    if not citations:
+        return
+    st.markdown("**Sources used**")
+    for position, citation in enumerate(citations, start=1):
+        number = citation.source_number or position
+        with st.expander(f"Source {number} · {citation.source_name}"):
+            st.caption(f"{citation.source_type.title()} · {citation.location}")
+            if citation.excerpt:
+                st.write(citation.excerpt)
+            if citation.url:
+                st.link_button(
+                    "Open original webpage ↗",
+                    citation.url,
+                    use_container_width=True,
+                )
 
 
 def render_history(section_number: str) -> None:
@@ -80,6 +129,7 @@ def render_history(section_number: str) -> None:
         local_time = entry.created_at.astimezone().strftime("%d %b %Y %H:%M")
         with st.expander(f"{local_time} · {entry.question}"):
             st.markdown(entry.answer)
+            render_saved_sources(entry.citations)
 
     with st.expander("History controls"):
         confirmed = st.checkbox(
@@ -103,118 +153,352 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+if "dark_mode" not in st.session_state:
+    st.session_state["dark_mode"] = True
+
+dark_mode = bool(st.session_state["dark_mode"])
+
 st.markdown(
     """
     <style>
-    .stApp { background: #0f1420; color: #eef2ff; }
-    [data-testid="stHeader"] { background: transparent; }
-    [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #31265c 0%, #46327a 58%, #334c75 100%);
+    :root {
+        --ink: #17201d;
+        --muted: #68716d;
+        --paper: #f4f1e9;
+        --surface: #fffdf8;
+        --line: #d7d3c9;
+        --forest: #18372f;
+        --forest-soft: #285448;
+        --clay: #c55e3f;
+        --clay-dark: #9f442c;
+        --sage: #dce5df;
+        --sidebar: #18372f;
+        --sidebar-panel: #21473c;
+        --sidebar-line: #31594e;
+        --header: rgba(244, 241, 233, 0.92);
+        --button-ink: #ffffff;
+        --uploader: #f7f4ed;
+        --upload-border: #aaa79e;
+        --disabled: #e9e5db;
+        --disabled-line: #d2cdc1;
+        --disabled-ink: #606864;
+        --placeholder: #66706b;
+        --alert-bg: #edf3ee;
     }
-    [data-testid="stSidebar"] * { color: #eef4ff; }
-    [data-testid="stSidebar"] .stCaptionContainer { color: #d1c9e8; }
-    .block-container { max-width: 1120px; padding-top: 2.2rem; }
+    .stApp {
+        background: var(--paper);
+        color: var(--ink);
+        font-family: "Aptos", "Segoe UI", sans-serif;
+    }
+    [data-testid="stHeader"] { background: var(--header); }
+    [data-testid="stSidebar"] {
+        background: var(--sidebar);
+        border-right: 1px solid rgba(255,255,255,0.08);
+    }
+    [data-testid="stSidebar"] * { color: #f4f1e9; }
+    [data-testid="stSidebar"] .stCaptionContainer { color: #bfcfc8; }
+    [data-testid="stSidebar"] hr { border-color: rgba(255,255,255,0.12); }
+    [data-testid="stSidebar"] [data-testid="stExpander"] {
+        background: var(--sidebar-panel) !important;
+        border-color: var(--sidebar-line) !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stExpander"] summary,
+    [data-testid="stSidebar"] [data-testid="stExpander"] summary * {
+        color: #f4f1e9 !important;
+    }
+    .block-container {
+        max-width: 1080px;
+        padding-top: 2.4rem;
+        padding-bottom: 4rem;
+    }
     [data-testid="stMain"] p,
     [data-testid="stMain"] label,
     [data-testid="stMain"] h1,
     [data-testid="stMain"] h2,
     [data-testid="stMain"] h3,
-    [data-testid="stMain"] h4 { color: #eef2ff; }
+    [data-testid="stMain"] h4 { color: var(--ink); }
     [data-testid="stMain"] [data-testid="stCaptionContainer"] p {
-        color: #aeb8cc;
+        color: var(--muted);
     }
-    .hero {
-        padding: 2rem 2.2rem;
-        border-radius: 22px;
-        background: linear-gradient(135deg, #4a2f7d 0%, #6741a5 55%, #168a8c 100%);
-        color: white;
-        box-shadow: 0 16px 38px rgba(74, 47, 125, 0.18);
-        margin-bottom: 1.4rem;
+    .workspace-head {
+        padding: 0.3rem 0 1.8rem;
+        border-bottom: 1px solid var(--line);
+        margin-bottom: 1.6rem;
     }
-    .hero-kicker {
-        color: #8ef0dc;
-        font-size: 0.78rem;
-        font-weight: 700;
-        letter-spacing: 0.14em;
+    .workspace-kicker {
+        color: var(--clay-dark);
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.16em;
         text-transform: uppercase;
-        margin-bottom: 0.45rem;
+        margin-bottom: 0.65rem;
     }
-    .hero h1 { font-size: 2.35rem; margin: 0; color: white; }
-    .hero p { color: #eee8fa; font-size: 1.03rem; margin: 0.65rem 0 0; }
-    .privacy-pill {
-        display: inline-block;
-        background: rgba(98, 231, 205, 0.14);
-        color: #9af4df;
-        border: 1px solid rgba(154, 244, 223, 0.35);
-        border-radius: 999px;
-        padding: 0.32rem 0.7rem;
-        margin-top: 1rem;
-        font-size: 0.78rem;
-        font-weight: 650;
+    .workspace-title-row {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 1.5rem;
     }
-    [data-testid="stMetric"] {
-        background: #1a2232;
-        border: 1px solid #343d52;
-        border-radius: 15px;
-        padding: 0.9rem 1rem;
-        box-shadow: 0 4px 14px rgba(74, 47, 125, 0.06);
+    .workspace-head h1 {
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: clamp(2.2rem, 5vw, 3.7rem);
+        line-height: 1.02;
+        letter-spacing: -0.045em;
+        font-weight: 500;
+        margin: 0;
+        color: var(--ink);
     }
-    [data-testid="stMetricLabel"] p { color: #b7c0d8 !important; }
-    [data-testid="stMetricValue"] { color: #ffffff !important; }
+    .workspace-head p {
+        color: var(--muted);
+        max-width: 640px;
+        font-size: 1.02rem;
+        line-height: 1.65;
+        margin: 0.8rem 0 0;
+    }
+    .local-mark {
+        color: var(--forest);
+        border-bottom: 2px solid var(--clay);
+        padding-bottom: 0.2rem;
+        white-space: nowrap;
+        font-size: 0.76rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
     [data-testid="stFileUploader"] {
-        background: #1a2232;
-        border-radius: 15px;
+        background: var(--uploader);
+        border: 1px dashed var(--upload-border);
+        border-radius: 6px;
+        color: var(--ink);
     }
-    .stButton > button, [data-testid="stFormSubmitButton"] > button {
-        width: 100%;
-        border-radius: 11px;
+    [data-testid="stFileUploader"] p,
+    [data-testid="stFileUploader"] span,
+    [data-testid="stFileUploader"] small,
+    [data-testid="stFileUploader"] button {
+        color: var(--ink) !important;
+    }
+    [data-testid="stFileUploader"] ul,
+    [data-testid="stFileUploader"] li {
+        background: var(--surface) !important;
+        color: var(--ink) !important;
+    }
+    [data-testid="stFileUploaderDropzone"] {
+        background: var(--surface) !important;
+        border-color: var(--upload-border) !important;
+    }
+    [data-testid="stFileUploaderDropzone"] * { color: var(--ink) !important; }
+    [data-testid="stFileUploaderDropzone"] button {
+        background: var(--paper);
+        border: 1px solid var(--line);
+        color: var(--forest) !important;
+    }
+    .stButton > button,
+    [data-testid="stFormSubmitButton"] > button,
+    [data-testid="stDownloadButton"] > button {
+        border-radius: 5px;
         min-height: 2.8rem;
         font-weight: 700;
-        background: #6741a5;
-        color: white;
-        border: 0;
+        background: var(--forest);
+        color: var(--button-ink);
+        border: 1px solid var(--forest);
+        box-shadow: none;
     }
-    .stButton > button:hover, [data-testid="stFormSubmitButton"] > button:hover {
-        background: #513287;
-        color: white;
+    .stButton > button:hover,
+    [data-testid="stFormSubmitButton"] > button:hover,
+    [data-testid="stDownloadButton"] > button:hover {
+        background: var(--forest-soft);
+        border-color: var(--forest-soft);
+        color: var(--button-ink);
+    }
+    .stButton > button *,
+    [data-testid="stFormSubmitButton"] > button *,
+    [data-testid="stDownloadButton"] > button * {
+        color: inherit !important;
+    }
+    .stButton > button:focus { box-shadow: 0 0 0 3px rgba(197,94,63,0.18); }
+    .stButton > button:disabled,
+    [data-testid="stFormSubmitButton"] > button:disabled {
+        background: var(--disabled) !important;
+        border-color: var(--disabled-line) !important;
+        color: var(--disabled-ink) !important;
+        opacity: 1 !important;
     }
     [data-testid="stForm"] {
-        background: #1a2232;
-        border: 1px solid #343d52;
-        border-radius: 16px;
-        padding: 1.15rem;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 1.25rem;
     }
     [data-testid="stExpander"] {
-        background: #1a2232;
-        border-color: #343d52;
-        border-radius: 12px;
+        background: var(--surface);
+        border-color: var(--line);
+        border-radius: 6px;
+    }
+    [data-testid="stMain"] [data-testid="stExpander"] > details > summary {
+        background: var(--surface) !important;
+        color: var(--ink) !important;
+    }
+    [data-testid="stMain"] [data-testid="stExpander"] > details > summary * {
+        color: var(--ink) !important;
+    }
+    [data-testid="stMain"] [data-testid="stExpander"] > details > summary:hover {
+        background: var(--sage) !important;
     }
     [data-testid="stVerticalBlockBorderWrapper"] {
-        background: #1a2232;
-        border-color: #343d52 !important;
+        background: var(--surface);
+        border-color: var(--line) !important;
+        border-radius: 8px !important;
     }
-    [data-testid="stAlert"] p { color: inherit !important; }
-    [data-baseweb="tab"] { color: #cdd5e7; }
-    [aria-selected="true"][data-baseweb="tab"] { color: #b99af2; }
-    [data-baseweb="input"] { background: #101622; }
-    [data-baseweb="input"] input { color: #ffffff; }
-    [data-baseweb="input"] input::placeholder { color: #aeb7ca; opacity: 1; }
+    [data-testid="stAlert"] {
+        background: var(--alert-bg) !important;
+        border: 1px solid var(--line) !important;
+        border-radius: 5px;
+    }
+    [data-testid="stAlert"] * { color: var(--ink) !important; }
+    [data-baseweb="tab"] { color: var(--muted); }
+    [aria-selected="true"][data-baseweb="tab"] { color: var(--forest); }
+    [data-baseweb="input"], [data-baseweb="select"] {
+        background: var(--surface);
+        border-color: var(--line);
+    }
+    [data-baseweb="input"] input,
+    [data-baseweb="textarea"] textarea { color: var(--ink) !important; }
+    [data-baseweb="input"] input::placeholder,
+    [data-baseweb="textarea"] textarea::placeholder {
+        color: var(--placeholder) !important;
+        opacity: 1;
+    }
+    [data-baseweb="tag"] { background-color: var(--sage) !important; }
+    [data-baseweb="tag"] span { color: var(--forest) !important; }
+    [data-testid="stPopover"] button {
+        background: var(--surface);
+        color: var(--forest);
+        border: 1px solid var(--forest);
+    }
+    [data-testid="stPopover"] button:hover {
+        background: var(--sage);
+        color: var(--forest);
+    }
     .section-label {
-        color: #a98be5;
-        font-size: 0.78rem;
-        font-weight: 750;
-        letter-spacing: 0.1em;
+        color: var(--clay-dark);
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 0.16em;
         text-transform: uppercase;
-        margin: 1.6rem 0 0.25rem;
+        margin: 2.1rem 0 0.4rem;
+    }
+    .source-summary {
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+        color: var(--muted);
+        font-size: 0.88rem;
+        margin: 0.15rem 0 0.75rem;
+    }
+    .source-summary strong { color: var(--ink); }
+    .source-dot {
+        width: 8px;
+        height: 8px;
+        background: var(--clay);
+        border-radius: 50%;
+        display: inline-block;
+    }
+    .citation-intro {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 1rem;
+        margin: 1.15rem 0 0.55rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--line);
+        color: var(--ink);
+    }
+    .citation-intro strong {
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 1.05rem;
+        font-weight: 600;
+    }
+    .citation-intro span {
+        color: var(--muted);
+        font-size: 0.82rem;
+    }
+    h2, h3 { letter-spacing: -0.02em; }
+    @media (max-width: 760px) {
+        .block-container { padding: 1.4rem 1rem 3rem; }
+        .workspace-title-row { display: block; }
+        .local-mark { display: inline-block; margin-top: 1rem; }
+        .workspace-head h1 { font-size: 2.45rem; }
+        .citation-intro { display: block; }
+        .citation-intro span { display: block; margin-top: 0.25rem; }
     }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
+if dark_mode:
+    st.markdown(
+        """
+        <style>
+        :root {
+            --ink: #ecebe4;
+            --muted: #aab5af;
+            --paper: #101613;
+            --surface: #18211d;
+            --line: #34423c;
+            --forest: #91bca8;
+            --forest-soft: #afd0c0;
+            --clay: #df7958;
+            --clay-dark: #ee9678;
+            --sage: #273a32;
+            --sidebar: #0b1c16;
+            --sidebar-panel: #163127;
+            --sidebar-line: #2b5043;
+            --header: rgba(16, 22, 19, 0.92);
+            --button-ink: #102018;
+            --uploader: #141c18;
+            --upload-border: #536059;
+            --disabled: #222b27;
+            --disabled-line: #39443f;
+            --disabled-ink: #aab4af;
+            --placeholder: #aab4af;
+            --alert-bg: #1c2923;
+        }
+        [data-testid="stToolbar"] { color: var(--ink); }
+        [data-testid="stFileUploaderDropzone"] button {
+            background: #202b26;
+            color: var(--ink) !important;
+        }
+        [data-baseweb="popover"],
+        [data-baseweb="menu"],
+        [role="listbox"] {
+            background: var(--surface) !important;
+            color: var(--ink) !important;
+        }
+        [role="option"] { color: var(--ink) !important; }
+        [role="option"]:hover { background: var(--sage) !important; }
+        [data-baseweb="textarea"] textarea,
+        [data-baseweb="input"] input {
+            background: var(--surface) !important;
+            color: var(--ink) !important;
+        }
+        [data-testid="stMarkdownContainer"] code {
+            background: #222d28;
+            color: #f1c2b2;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
 with st.sidebar:
     st.markdown("## ✦ Local PDF AI")
     st.caption("PRIVATE DOCUMENT Q&A")
+    st.toggle(
+        "Dark mode",
+        key="dark_mode",
+        help="Switch between the light editorial theme and a low-glare dark theme.",
+    )
     st.divider()
     st.markdown("Add your documents, choose what to search, and ask a question.")
     st.caption("Your documents and questions stay on this computer.")
@@ -235,11 +519,14 @@ if storage_failure:
 
 st.markdown(
     """
-    <div class="hero">
-        <div class="hero-kicker">Version 2 · Unified sources</div>
-        <h1>Ask your documents.</h1>
-        <p>Search your PDFs and approved webpages together and get a clear answer.</p>
-        <span class="privacy-pill">● 100% local processing</span>
+    <div class="workspace-head">
+        <div class="workspace-kicker">Private knowledge workspace · Version 2</div>
+        <div class="workspace-title-row">
+            <h1>Ask your documents.</h1>
+            <span class="local-mark">Local by design</span>
+        </div>
+        <p>Add a document or approved webpage, choose the sources that matter,
+        and receive an answer grounded in your own material.</p>
     </div>
     """,
     unsafe_allow_html=True,
@@ -273,6 +560,11 @@ with st.container(border=True):
             website_submitted = st.form_submit_button("Add or refresh website")
 
 store = get_vector_store()
+newly_added_source_keys: list[str] = []
+
+if st.session_state.get("source_selection_ui_version") != SOURCE_SELECTION_UI_VERSION:
+    st.session_state[SOURCE_SELECTION_KEY] = []
+    st.session_state["source_selection_ui_version"] = SOURCE_SELECTION_UI_VERSION
 
 if index_pdfs and uploaded_files:
     with st.spinner("Processing and saving PDFs locally..."):
@@ -288,10 +580,10 @@ if index_pdfs and uploaded_files:
                 embedded_pdf_chunks = embed_chunks(
                     pdf_chunks, get_embedding_model()
                 )
-                store.replace_source(
-                    pdf_source_key(uploaded_file.name), embedded_pdf_chunks
-                )
-            st.success("PDF index saved. It will remain available after restart.")
+                source_key = pdf_source_key(uploaded_file.name)
+                store.replace_source(source_key, embedded_pdf_chunks)
+                newly_added_source_keys.append(source_key)
+            st.success("PDF saved and selected for your next question.")
         except Exception as error:
             st.error(f"I could not index the uploaded PDFs: {error}")
 
@@ -313,10 +605,10 @@ if website_submitted:
                 embedded_website_chunks = embed_chunks(
                     website_chunks, get_embedding_model()
                 )
-                store.replace_source(
-                    website_source_key(website_url), embedded_website_chunks
-                )
-                st.success("Website index saved. Use the same URL to refresh it.")
+                source_key = website_source_key(website_url)
+                store.replace_source(source_key, embedded_website_chunks)
+                newly_added_source_keys.append(source_key)
+                st.success("Website saved and selected for your next question.")
             except WebsiteLoadError as error:
                 st.error(f"I could not add that website: {error}")
             except Exception as error:
@@ -355,31 +647,43 @@ source_labels = {
     )
     for source in stored_sources
 }
-selection_key = "selected_source_keys"
-if selection_key not in st.session_state:
-    st.session_state[selection_key] = available_source_keys
-else:
-    st.session_state[selection_key] = [
-        key
-        for key in st.session_state[selection_key]
-        if key in available_source_keys
-    ]
-
-select_all_col, clear_selection_col = st.columns(2)
-if select_all_col.button("Select all sources", use_container_width=True):
-    st.session_state[selection_key] = available_source_keys
-    st.rerun()
-if clear_selection_col.button("Clear source selection", use_container_width=True):
-    st.session_state[selection_key] = []
-    st.rerun()
-
-selected_source_keys = st.multiselect(
-    "Sources to search",
-    options=available_source_keys,
-    format_func=lambda key: source_labels[key],
-    key=selection_key,
-    help="Only selected sources can contribute retrieved evidence or answers.",
+st.session_state[SOURCE_SELECTION_KEY] = reconcile_source_selection(
+    st.session_state.get(SOURCE_SELECTION_KEY, []),
+    available_source_keys,
+    newly_added_source_keys,
 )
+
+selected_count = len(st.session_state[SOURCE_SELECTION_KEY])
+st.markdown(
+    f'<div class="source-summary"><span class="source-dot"></span>'
+    f'<strong>{selected_count}</strong> of {len(available_source_keys)} library '
+    f'{"source" if len(available_source_keys) == 1 else "sources"} selected</div>',
+    unsafe_allow_html=True,
+)
+
+with st.popover("Choose from document library", use_container_width=True):
+    st.caption(
+        "Previously uploaded documents stay here, out of the way. "
+        "New uploads are selected automatically."
+    )
+    library_all_col, library_clear_col = st.columns(2)
+    if library_all_col.button(
+        "Use all", key="library-select-all", use_container_width=True
+    ):
+        st.session_state[SOURCE_SELECTION_KEY] = available_source_keys
+        st.rerun()
+    if library_clear_col.button(
+        "Clear", key="library-clear", use_container_width=True
+    ):
+        st.session_state[SOURCE_SELECTION_KEY] = []
+        st.rerun()
+    selected_source_keys = st.multiselect(
+        "Documents available for this question",
+        options=available_source_keys,
+        format_func=lambda key: source_labels[key],
+        key=SOURCE_SELECTION_KEY,
+        help="Only selected documents can contribute to the answer.",
+    )
 selected_source_names = tuple(
     source_labels[key] for key in selected_source_keys
 )
@@ -425,5 +729,6 @@ if search_submitted:
                 st.markdown('<div class="section-label">Answer</div>', unsafe_allow_html=True)
                 with st.container(border=True):
                     st.markdown(f"### {answer}")
+                    render_answer_sources(answer, results)
 
 render_history("03")

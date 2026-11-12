@@ -1,4 +1,4 @@
-# Version 2.0.0
+# Version 2 Final
 
 Version 2 turns the original single-PDF learning project into a persistent,
 multi-source local RAG application.
@@ -17,10 +17,17 @@ multi-source local RAG application.
 - Configure model names, storage locations, upload limits, and service URLs
   through environment variables.
 - Run the application, Ollama, Qwen, and Tesseract using Docker Compose.
+- Keep previous uploads in a compact document-library selector while
+  automatically selecting new and updated sources.
+- Show expandable source cards with the exact cited passage, page or section,
+  and original webpage link when available.
+- Preserve cited passages in new question-history records.
+- Use a redesigned, accessible interface with default Dark mode and an optional
+  Light mode.
 
 ## Verification
 
-- All 86 automated tests pass.
+- All 93 automated tests pass.
 - The basic ten-question quality benchmark passes 10/10.
 - The difficult ten-question benchmark passes 8/10 and retains its two known
   failures to document current model limitations.

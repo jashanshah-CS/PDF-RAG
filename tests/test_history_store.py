@@ -36,6 +36,8 @@ def test_history_survives_reopening_and_saves_used_citations(tmp_path) -> None:
     assert entries[0].question == "How much leave?"
     assert entries[0].citations[0].source_name == "benefits.pdf"
     assert entries[0].citations[0].page_number == 4
+    assert entries[0].citations[0].source_number == 2
+    assert entries[0].citations[0].excerpt == "Annual leave is 29 days."
     assert entries[0].selected_sources == ("PDF · benefits.pdf",)
 
 

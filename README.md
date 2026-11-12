@@ -26,13 +26,16 @@ tested before the next feature is added.
 - Search for the five chunks most relevant to a natural-language question
   using combined semantic similarity and exact-term matching
 - Select exactly which saved PDFs and websites may be searched for each question
-- Show similarity scores and page-level source information
+- Keep previous uploads in a compact document-library selector and automatically
+  select newly added or updated sources
 - Generate an evidence-grounded answer with local Qwen3 8B through Ollama
 - Support alternative Ollama chat models with reasoning disabled for fast document Q&A
 - Validate structured model output and render citations programmatically
+- Show cited evidence in expandable source cards with page, section, excerpt,
+  and original webpage links when available
 - Refuse questions unsupported by the retrieved text
 - Evaluate retrieval, answers, citations, refusals, and response time from CSV
-- Preview original pages, chunks, and a sample embedding
+- Switch between a high-contrast editorial Light theme and default Dark theme
 - Process documents locally on the computer
 
 The embedding model is
@@ -315,6 +318,10 @@ complex tables, so OCR-labelled evidence should be checked against the source.
 - [x] Persist searchable question, answer, citation, and timestamp history
 - [x] Recognize image-only PDF pages locally with Tesseract OCR
 - [x] Filter retrieval to user-selected PDF and website sources
+- [x] Hide saved sources in a compact document-library selector
+- [x] Automatically select newly uploaded or refreshed sources
+- [x] Show expandable evidence cards for current and saved answers
+- [x] Provide accessible Light and Dark interface themes
 
 ## Limitations
 

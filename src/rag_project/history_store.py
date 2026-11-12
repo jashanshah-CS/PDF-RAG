@@ -4,12 +4,12 @@ from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 import json
 from pathlib import Path
-import re
 import sqlite3
 from uuid import uuid4
 
 from src.rag_project.search import SearchResult
 from src.rag_project.config import SETTINGS
+from src.rag_project.citations import cited_source_numbers
 
 
 DEFAULT_HISTORY_PATH = SETTINGS.history_path
@@ -25,6 +25,8 @@ class HistoryCitation:
     page_number: int | None
     url: str | None
     chunk_number: int
+    source_number: int = 0
+    excerpt: str = ""
 
 
 @dataclass(frozen=True)
@@ -42,9 +44,7 @@ class HistoryEntry:
 def _answer_citations(
     answer: str, results: list[SearchResult]
 ) -> tuple[HistoryCitation, ...]:
-    numbers = sorted(
-        {int(value) for value in re.findall(r"\[Source\s+(\d+)\]", answer, re.I)}
-    )
+    numbers = cited_source_numbers(answer, len(results))
     citations: list[HistoryCitation] = []
     for number in numbers:
         if not 1 <= number <= len(results):
@@ -58,6 +58,8 @@ def _answer_citations(
                 page_number=chunk.location.page_number,
                 url=chunk.location.url,
                 chunk_number=chunk.chunk_number,
+                source_number=number,
+                excerpt=chunk.text,
             )
         )
     return tuple(citations)
