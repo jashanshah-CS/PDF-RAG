@@ -242,6 +242,36 @@ Initial refusals also receive this single review so obvious spelling mistakes ca
 be reconsidered without repeatedly calling the model. Simple supported questions
 remain single-pass.
 
+## Evaluate Version 3 retrieval
+
+Version 3 starts with a retrieval-only baseline so search changes can be
+measured independently from Ollama answer generation. The benchmark uses JSON,
+not CSV. Its 20 human-authored cases cover semantic paraphrases, exact terms,
+context, multi-source questions, and unsupported probes across the synthetic
+PDF corpus.
+
+Run it after the embedding model has been downloaded once:
+
+```powershell
+uv run python evaluate_retrieval.py
+```
+
+The command searches the PDFs in `output/pdf/quality-test-10` and
+`output/pdf/version2-evaluation`, then writes a detailed report to
+`evaluation/retrieval_v3_baseline_results.json`. It reports Recall@5, mean
+reciprocal rank, source accuracy, exact location accuracy, multi-source
+coverage, and query latency. Unsupported probes are excluded from relevance
+metrics; their highest similarity scores are retained for future threshold
+calibration.
+
+Use one or more custom directories when comparing another corpus:
+
+```powershell
+uv run python evaluate_retrieval.py `
+  --pdf-dir "C:\path\to\first-corpus" `
+  --pdf-dir "C:\path\to\second-corpus"
+```
+
 ## Local database
 
 Version 2 uses **ChromaDB** as an embedded vector database. It runs inside the
@@ -322,6 +352,15 @@ complex tables, so OCR-labelled evidence should be checked against the source.
 - [x] Automatically select newly uploaded or refreshed sources
 - [x] Show expandable evidence cards for current and saved answers
 - [x] Provide accessible Light and Dark interface themes
+
+## Version 3 roadmap
+
+- [x] Establish a versioned JSON retrieval benchmark and baseline report
+- [ ] Replace the small exact-term bonus with a proper BM25 keyword retriever
+- [ ] Fuse semantic and keyword rankings with a deterministic hybrid strategy
+- [ ] Add sentence-window context expansion after retrieval
+- [ ] Add a reranking stage and compare it against the frozen baseline
+- [ ] Add regression thresholds to automated tests and CI
 
 ## Limitations
 

@@ -1,0 +1,167 @@
+{
+  "schema_version": 1,
+  "name": "version-3-retrieval-baseline",
+  "description": "Human-authored relevance judgements for the ten synthetic policy PDFs.",
+  "cases": [
+    {
+      "id": "semantic-01",
+      "category": "semantic",
+      "question": "Can an Aurora employee do their job from another country, and for how long?",
+      "expected_locations": [
+        {"source": "aurora_remote_work_policy.pdf", "page": 1, "evidence": ["outside the United Kingdom", "15 calendar days"]}
+      ]
+    },
+    {
+      "id": "semantic-02",
+      "category": "semantic",
+      "question": "How quickly must the most serious Bluebird support incident be acknowledged?",
+      "expected_locations": [
+        {"source": "bluebird_customer_support_handbook.pdf", "page": 1, "evidence": ["initial response within 15 minutes"]}
+      ]
+    },
+    {
+      "id": "semantic-03",
+      "category": "semantic",
+      "question": "How long should Delta keep signed customer agreements after they finish?",
+      "expected_locations": [
+        {"source": "delta_data_retention_schedule.pdf", "page": 1, "evidence": ["seven years after the contract ends"]}
+      ]
+    },
+    {
+      "id": "semantic-04",
+      "category": "semantic",
+      "question": "Which Ember learning option can every permanent member of staff attend?",
+      "expected_locations": [
+        {"source": "ember_training_catalogue.pdf", "page": 1, "evidence": ["Cloud Foundations", "open to all permanent employees"]}
+      ]
+    },
+    {
+      "id": "semantic-05",
+      "category": "semantic",
+      "question": "Where should Juniper guests gather if the building is evacuated?",
+      "expected_locations": [
+        {"source": "juniper_visitor_safety_guide.pdf", "page": 1, "evidence": ["north car park assembly point"]}
+      ]
+    },
+    {
+      "id": "exact-01",
+      "category": "exact",
+      "question": "What does Coral require for a purchase above GBP 5,000?",
+      "expected_locations": [
+        {"source": "coral_procurement_rules.pdf", "page": 1, "evidence": ["three written supplier quotations"]}
+      ]
+    },
+    {
+      "id": "exact-02",
+      "category": "exact",
+      "question": "Which service has an RPO of 15 minutes?",
+      "expected_locations": [
+        {"source": "falcon_business_continuity_plan.pdf", "page": 1, "evidence": ["payments service", "recovery point objective of 15 minutes"]}
+      ]
+    },
+    {
+      "id": "exact-03",
+      "category": "exact",
+      "question": "Which policy states 17:00 every Thursday?",
+      "expected_locations": [
+        {"source": "indigo_product_release_process.pdf", "page": 1, "evidence": ["code freeze begins at 17:00 every Thursday"]}
+      ]
+    },
+    {
+      "id": "exact-04",
+      "category": "exact",
+      "question": "What is Greenwood's 46 percent target measured from the 2022 baseline?",
+      "expected_locations": [
+        {"source": "greenwood_sustainability_plan.pdf", "page": 1, "evidence": ["scope-one and scope-two emissions", "46 percent"]}
+      ]
+    },
+    {
+      "id": "exact-05",
+      "category": "exact",
+      "question": "When does Harbour pay 45 pence per mile for the first 10,000 miles?",
+      "expected_locations": [
+        {"source": "harbour_expenses_guide.pdf", "page": 1, "evidence": ["personal car", "45 pence per mile"]}
+      ]
+    },
+    {
+      "id": "context-01",
+      "category": "context",
+      "question": "Who can approve a temporary exception to Aurora office attendance and how long can it last?",
+      "expected_locations": [
+        {"source": "aurora_remote_work_policy.pdf", "page": 1, "evidence": ["department head", "up to six weeks"]}
+      ]
+    },
+    {
+      "id": "context-02",
+      "category": "context",
+      "question": "What happens when a priority-one Bluebird incident is still unresolved after 45 minutes?",
+      "expected_locations": [
+        {"source": "bluebird_customer_support_handbook.pdf", "page": 1, "evidence": ["escalated to the duty manager after 45 minutes"]}
+      ]
+    },
+    {
+      "id": "context-03",
+      "category": "context",
+      "question": "What experience is required before taking Ember's Leadership Essentials course?",
+      "expected_locations": [
+        {"source": "ember_training_catalogue.pdf", "page": 1, "evidence": ["managed people for at least six months"]}
+      ]
+    },
+    {
+      "id": "context-04",
+      "category": "context",
+      "question": "Whose approval is needed before an Indigo production release?",
+      "expected_locations": [
+        {"source": "indigo_product_release_process.pdf", "page": 1, "evidence": ["Quality Assurance and the service owner"]}
+      ]
+    },
+    {
+      "id": "multi-01",
+      "category": "multi_source",
+      "question": "Compare Aurora's home-office allowance with Harbour's monthly home internet support.",
+      "expected_locations": [
+        {"source": "aurora_remote_work_policy.pdf", "page": 1, "evidence": ["GBP 240 home-office allowance"]},
+        {"source": "harbour_expenses_guide.pdf", "page": 1, "evidence": ["GBP 30 per month"]}
+      ]
+    },
+    {
+      "id": "multi-02",
+      "category": "multi_source",
+      "question": "Compare Harbour's expense claim deadline with Delta's deletion period for unsuccessful applicants.",
+      "expected_locations": [
+        {"source": "harbour_expenses_guide.pdf", "page": 1, "evidence": ["within 30 calendar days"]},
+        {"source": "delta_data_retention_schedule.pdf", "page": 1, "evidence": ["deleted 12 months after"]}
+      ]
+    },
+    {
+      "id": "multi-03",
+      "category": "multi_source",
+      "question": "What does 15 minutes mean in the Bluebird and Falcon documents?",
+      "expected_locations": [
+        {"source": "bluebird_customer_support_handbook.pdf", "page": 1, "evidence": ["initial response within 15 minutes"]},
+        {"source": "falcon_business_continuity_plan.pdf", "page": 1, "evidence": ["recovery point objective of 15 minutes"]}
+      ]
+    },
+    {
+      "id": "multi-04",
+      "category": "multi_source",
+      "question": "What Thursday requirements appear in the Aurora and Indigo policies?",
+      "expected_locations": [
+        {"source": "aurora_remote_work_policy.pdf", "page": 1, "evidence": ["Tuesdays and Thursdays"]},
+        {"source": "indigo_product_release_process.pdf", "page": 1, "evidence": ["17:00 every Thursday"]}
+      ]
+    },
+    {
+      "id": "unsupported-01",
+      "category": "unsupported",
+      "question": "What food is served in the company cafeteria on Fridays?",
+      "expected_locations": []
+    },
+    {
+      "id": "unsupported-02",
+      "category": "unsupported",
+      "question": "What is the chief executive's date of birth?",
+      "expected_locations": []
+    }
+  ]
+}

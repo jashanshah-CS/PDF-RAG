@@ -36,14 +36,16 @@ class EmbeddedChunk:
     embedding: tuple[float, ...]
 
 
-def load_embedding_model() -> SentenceTransformer:
-    """Load the free embedding model on the CPU and cache it locally."""
+def load_embedding_model(*, local_only: bool | None = None) -> SentenceTransformer:
+    """Load the free embedding model on CPU, optionally forbidding network access."""
     MODEL_CACHE.mkdir(parents=True, exist_ok=True)
     return SentenceTransformer(
         MODEL_NAME,
         device="cpu",
         cache_folder=str(MODEL_CACHE),
-        local_files_only=SETTINGS.embedding_local_only,
+        local_files_only=(
+            SETTINGS.embedding_local_only if local_only is None else local_only
+        ),
     )
 
 

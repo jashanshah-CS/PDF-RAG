@@ -1,0 +1,1162 @@
+{
+  "schema_version": 1,
+  "benchmark": "version-3-retrieval-baseline",
+  "top_k": 5,
+  "corpus": [
+    "aurora_remote_work_policy.pdf",
+    "bluebird_customer_support_handbook.pdf",
+    "coral_procurement_rules.pdf",
+    "delta_data_retention_schedule.pdf",
+    "ember_training_catalogue.pdf",
+    "falcon_business_continuity_plan.pdf",
+    "greenwood_sustainability_plan.pdf",
+    "harbour_expenses_guide.pdf",
+    "indigo_product_release_process.pdf",
+    "juniper_visitor_safety_guide.pdf",
+    "atlas_travel_policy.pdf",
+    "beacon_security_standard.pdf",
+    "cedar_benefits_guide.pdf",
+    "project_orion_brief.pdf",
+    "scanned_ocr_test.pdf",
+    "summit_office_manual.pdf"
+  ],
+  "summary": {
+    "case_count": 20,
+    "supported_case_count": 18,
+    "unsupported_case_count": 2,
+    "recall_at_5": 1.0,
+    "mean_reciprocal_rank": 0.958333,
+    "source_accuracy_at_5": 1,
+    "location_accuracy_at_5": 1,
+    "multi_source_coverage_at_5": 1,
+    "latency_ms": {
+      "mean": 13.381,
+      "median": 13.09,
+      "p95": 14.911,
+      "max": 15.731
+    },
+    "unsupported_top_score_mean": 0.24132
+  },
+  "results": [
+    {
+      "case_id": "semantic-01",
+      "category": "semantic",
+      "question": "Can an Aurora employee do their job from another country, and for how long?",
+      "supported": true,
+      "expected_count": 1,
+      "matched_count": 1,
+      "source_recall": 1,
+      "location_recall": 1,
+      "evidence_recall": 1.0,
+      "reciprocal_rank": 1.0,
+      "latency_ms": 15.731,
+      "top_score": 0.630198,
+      "retrieved": [
+        {
+          "rank": 1,
+          "source": "aurora_remote_work_policy.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.630198,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Aurora Remote Work Policy Effective March 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation, citations, and"
+        },
+        {
+          "rank": 2,
+          "source": "summit_office_manual.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.223094,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Summit Office Operations Manual Workplace procedures This document is fictional and exists only to test retrieval, grounded answers, source separation, citation"
+        },
+        {
+          "rank": 3,
+          "source": "delta_data_retention_schedule.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.241594,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Delta Data Retention Schedule Approved corporate retention periods This document is fictional and exists only to test retrieval, grounded answers, source separa"
+        },
+        {
+          "rank": 4,
+          "source": "cedar_benefits_guide.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.220186,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Cedar Employee Benefits Guide Benefits year 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation, citations, a"
+        },
+        {
+          "rank": 5,
+          "source": "atlas_travel_policy.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.178181,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Atlas Travel and Expense Policy Effective 1 January 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation, cita"
+        }
+      ]
+    },
+    {
+      "case_id": "semantic-02",
+      "category": "semantic",
+      "question": "How quickly must the most serious Bluebird support incident be acknowledged?",
+      "supported": true,
+      "expected_count": 1,
+      "matched_count": 1,
+      "source_recall": 1,
+      "location_recall": 1,
+      "evidence_recall": 1.0,
+      "reciprocal_rank": 1.0,
+      "latency_ms": 13.536,
+      "top_score": 0.647202,
+      "retrieved": [
+        {
+          "rank": 1,
+          "source": "bluebird_customer_support_handbook.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.647202,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Bluebird Customer Support Handbook Service standards for 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation,"
+        },
+        {
+          "rank": 2,
+          "source": "falcon_business_continuity_plan.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.342234,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Falcon Business Continuity Plan Critical service recovery This document is fictional and exists only to test retrieval, grounded answers, source separation, cit"
+        },
+        {
+          "rank": 3,
+          "source": "beacon_security_standard.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.26905,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 2 Incidents and records Incident reporting A suspected security incident must be reported to the Security Desk within 20 minutes of discovery. Staff must preserve"
+        },
+        {
+          "rank": 4,
+          "source": "project_orion_brief.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.274545,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 2 Measures and delivery risks Success measures The programme aims to reduce stockout events by 12 percent and achieve at least 92 percent weekly demand-forecast a"
+        },
+        {
+          "rank": 5,
+          "source": "cedar_benefits_guide.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.184809,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Cedar Employee Benefits Guide Benefits year 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation, citations, a"
+        }
+      ]
+    },
+    {
+      "case_id": "semantic-03",
+      "category": "semantic",
+      "question": "How long should Delta keep signed customer agreements after they finish?",
+      "supported": true,
+      "expected_count": 1,
+      "matched_count": 1,
+      "source_recall": 1,
+      "location_recall": 1,
+      "evidence_recall": 1.0,
+      "reciprocal_rank": 1.0,
+      "latency_ms": 12.821,
+      "top_score": 0.62531,
+      "retrieved": [
+        {
+          "rank": 1,
+          "source": "delta_data_retention_schedule.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.62531,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Delta Data Retention Schedule Approved corporate retention periods This document is fictional and exists only to test retrieval, grounded answers, source separa"
+        },
+        {
+          "rank": 2,
+          "source": "falcon_business_continuity_plan.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.322938,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Falcon Business Continuity Plan Critical service recovery This document is fictional and exists only to test retrieval, grounded answers, source separation, cit"
+        },
+        {
+          "rank": 3,
+          "source": "bluebird_customer_support_handbook.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.226125,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Bluebird Customer Support Handbook Service standards for 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation,"
+        },
+        {
+          "rank": 4,
+          "source": "beacon_security_standard.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.254676,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 2 Incidents and records Incident reporting A suspected security incident must be reported to the Security Desk within 20 minutes of discovery. Staff must preserve"
+        },
+        {
+          "rank": 5,
+          "source": "indigo_product_release_process.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.226392,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Indigo Product Release Process Production change governance This document is fictional and exists only to test retrieval, grounded answers, source separation, c"
+        }
+      ]
+    },
+    {
+      "case_id": "semantic-04",
+      "category": "semantic",
+      "question": "Which Ember learning option can every permanent member of staff attend?",
+      "supported": true,
+      "expected_count": 1,
+      "matched_count": 1,
+      "source_recall": 1,
+      "location_recall": 1,
+      "evidence_recall": 1.0,
+      "reciprocal_rank": 1.0,
+      "latency_ms": 13.537,
+      "top_score": 0.630335,
+      "retrieved": [
+        {
+          "rank": 1,
+          "source": "ember_training_catalogue.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.630335,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Ember Training Catalogue Professional development programme This document is fictional and exists only to test retrieval, grounded answers, source separation, c"
+        },
+        {
+          "rank": 2,
+          "source": "cedar_benefits_guide.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.275088,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 2 Allowances and pension Learning allowance Employees receive a GBP 1,500 learning allowance per calendar year after completing probation. The allowance cannot be"
+        },
+        {
+          "rank": 3,
+          "source": "aurora_remote_work_policy.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.257104,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Aurora Remote Work Policy Effective March 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation, citations, and"
+        },
+        {
+          "rank": 4,
+          "source": "summit_office_manual.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.251022,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Summit Office Operations Manual Workplace procedures This document is fictional and exists only to test retrieval, grounded answers, source separation, citation"
+        },
+        {
+          "rank": 5,
+          "source": "atlas_travel_policy.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.225751,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Atlas Travel and Expense Policy Effective 1 January 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation, cita"
+        }
+      ]
+    },
+    {
+      "case_id": "semantic-05",
+      "category": "semantic",
+      "question": "Where should Juniper guests gather if the building is evacuated?",
+      "supported": true,
+      "expected_count": 1,
+      "matched_count": 1,
+      "source_recall": 1,
+      "location_recall": 1,
+      "evidence_recall": 1.0,
+      "reciprocal_rank": 1.0,
+      "latency_ms": 14.911,
+      "top_score": 0.529083,
+      "retrieved": [
+        {
+          "rank": 1,
+          "source": "juniper_visitor_safety_guide.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.529083,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Juniper Visitor Safety Guide Rules for guests and contractors This document is fictional and exists only to test retrieval, grounded answers, source separation,"
+        },
+        {
+          "rank": 2,
+          "source": "summit_office_manual.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.427298,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 2 Safety and facilities Evacuation The primary assembly point is Riverside Square. If Riverside Square is unavailable, staff must use the secondary assembly point"
+        },
+        {
+          "rank": 3,
+          "source": "summit_office_manual.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.20668,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Summit Office Operations Manual Workplace procedures This document is fictional and exists only to test retrieval, grounded answers, source separation, citation"
+        },
+        {
+          "rank": 4,
+          "source": "falcon_business_continuity_plan.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.181549,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Falcon Business Continuity Plan Critical service recovery This document is fictional and exists only to test retrieval, grounded answers, source separation, cit"
+        },
+        {
+          "rank": 5,
+          "source": "greenwood_sustainability_plan.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.17969,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Greenwood Sustainability Plan Environmental targets to 2030 This document is fictional and exists only to test retrieval, grounded answers, source separation, c"
+        }
+      ]
+    },
+    {
+      "case_id": "exact-01",
+      "category": "exact",
+      "question": "What does Coral require for a purchase above GBP 5,000?",
+      "supported": true,
+      "expected_count": 1,
+      "matched_count": 1,
+      "source_recall": 1,
+      "location_recall": 1,
+      "evidence_recall": 1.0,
+      "reciprocal_rank": 1.0,
+      "latency_ms": 14.799,
+      "top_score": 0.58219,
+      "retrieved": [
+        {
+          "rank": 1,
+          "source": "coral_procurement_rules.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.58219,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Coral Procurement Rules Purchasing controls This document is fictional and exists only to test retrieval, grounded answers, source separation, citations, and re"
+        },
+        {
+          "rank": 2,
+          "source": "harbour_expenses_guide.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.306876,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Harbour Expenses Guide Employee reimbursement rules This document is fictional and exists only to test retrieval, grounded answers, source separation, citations"
+        },
+        {
+          "rank": 3,
+          "source": "atlas_travel_policy.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.27079,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Atlas Travel and Expense Policy Effective 1 January 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation, cita"
+        },
+        {
+          "rank": 4,
+          "source": "atlas_travel_policy.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.264428,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 2 Expenses and deadlines Meal limits The daily meal limit is GBP 32 for domestic travel and GBP 48 for international travel. Alcohol is not reimbursable unless it"
+        },
+        {
+          "rank": 5,
+          "source": "cedar_benefits_guide.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.273078,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 2 Allowances and pension Learning allowance Employees receive a GBP 1,500 learning allowance per calendar year after completing probation. The allowance cannot be"
+        }
+      ]
+    },
+    {
+      "case_id": "exact-02",
+      "category": "exact",
+      "question": "Which service has an RPO of 15 minutes?",
+      "supported": true,
+      "expected_count": 1,
+      "matched_count": 1,
+      "source_recall": 1,
+      "location_recall": 1,
+      "evidence_recall": 1.0,
+      "reciprocal_rank": 1.0,
+      "latency_ms": 14.41,
+      "top_score": 0.399684,
+      "retrieved": [
+        {
+          "rank": 1,
+          "source": "falcon_business_continuity_plan.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.399684,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Falcon Business Continuity Plan Critical service recovery This document is fictional and exists only to test retrieval, grounded answers, source separation, cit"
+        },
+        {
+          "rank": 2,
+          "source": "bluebird_customer_support_handbook.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.353115,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Bluebird Customer Support Handbook Service standards for 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation,"
+        },
+        {
+          "rank": 3,
+          "source": "aurora_remote_work_policy.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.299085,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Aurora Remote Work Policy Effective March 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation, citations, and"
+        },
+        {
+          "rank": 4,
+          "source": "indigo_product_release_process.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.215956,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Indigo Product Release Process Production change governance This document is fictional and exists only to test retrieval, grounded answers, source separation, c"
+        },
+        {
+          "rank": 5,
+          "source": "harbour_expenses_guide.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.291865,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Harbour Expenses Guide Employee reimbursement rules This document is fictional and exists only to test retrieval, grounded answers, source separation, citations"
+        }
+      ]
+    },
+    {
+      "case_id": "exact-03",
+      "category": "exact",
+      "question": "Which policy states 17:00 every Thursday?",
+      "supported": true,
+      "expected_count": 1,
+      "matched_count": 1,
+      "source_recall": 1,
+      "location_recall": 1,
+      "evidence_recall": 1.0,
+      "reciprocal_rank": 0.25,
+      "latency_ms": 14.015,
+      "top_score": 0.319873,
+      "retrieved": [
+        {
+          "rank": 1,
+          "source": "aurora_remote_work_policy.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.319873,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Aurora Remote Work Policy Effective March 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation, citations, and"
+        },
+        {
+          "rank": 2,
+          "source": "atlas_travel_policy.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.384174,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 2 Expenses and deadlines Meal limits The daily meal limit is GBP 32 for domestic travel and GBP 48 for international travel. Alcohol is not reimbursable unless it"
+        },
+        {
+          "rank": 3,
+          "source": "summit_office_manual.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.34995,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Summit Office Operations Manual Workplace procedures This document is fictional and exists only to test retrieval, grounded answers, source separation, citation"
+        },
+        {
+          "rank": 4,
+          "source": "indigo_product_release_process.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.195931,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Indigo Product Release Process Production change governance This document is fictional and exists only to test retrieval, grounded answers, source separation, c"
+        },
+        {
+          "rank": 5,
+          "source": "atlas_travel_policy.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.25446,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Atlas Travel and Expense Policy Effective 1 January 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation, cita"
+        }
+      ]
+    },
+    {
+      "case_id": "exact-04",
+      "category": "exact",
+      "question": "What is Greenwood's 46 percent target measured from the 2022 baseline?",
+      "supported": true,
+      "expected_count": 1,
+      "matched_count": 1,
+      "source_recall": 1,
+      "location_recall": 1,
+      "evidence_recall": 1.0,
+      "reciprocal_rank": 1.0,
+      "latency_ms": 13.079,
+      "top_score": 0.490963,
+      "retrieved": [
+        {
+          "rank": 1,
+          "source": "greenwood_sustainability_plan.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.490963,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Greenwood Sustainability Plan Environmental targets to 2030 This document is fictional and exists only to test retrieval, grounded answers, source separation, c"
+        },
+        {
+          "rank": 2,
+          "source": "project_orion_brief.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.238849,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 2 Measures and delivery risks Success measures The programme aims to reduce stockout events by 12 percent and achieve at least 92 percent weekly demand-forecast a"
+        },
+        {
+          "rank": 3,
+          "source": "project_orion_brief.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.222405,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Project Orion Delivery Brief Inventory forecasting programme This document is fictional and exists only to test retrieval, grounded answers, source separation, "
+        },
+        {
+          "rank": 4,
+          "source": "bluebird_customer_support_handbook.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.227949,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Bluebird Customer Support Handbook Service standards for 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation,"
+        },
+        {
+          "rank": 5,
+          "source": "summit_office_manual.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.197201,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 2 Safety and facilities Evacuation The primary assembly point is Riverside Square. If Riverside Square is unavailable, staff must use the secondary assembly point"
+        }
+      ]
+    },
+    {
+      "case_id": "exact-05",
+      "category": "exact",
+      "question": "When does Harbour pay 45 pence per mile for the first 10,000 miles?",
+      "supported": true,
+      "expected_count": 1,
+      "matched_count": 1,
+      "source_recall": 1,
+      "location_recall": 1,
+      "evidence_recall": 1.0,
+      "reciprocal_rank": 1.0,
+      "latency_ms": 12.78,
+      "top_score": 0.579833,
+      "retrieved": [
+        {
+          "rank": 1,
+          "source": "harbour_expenses_guide.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.579833,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Harbour Expenses Guide Employee reimbursement rules This document is fictional and exists only to test retrieval, grounded answers, source separation, citations"
+        },
+        {
+          "rank": 2,
+          "source": "atlas_travel_policy.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.322882,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 2 Expenses and deadlines Meal limits The daily meal limit is GBP 32 for domestic travel and GBP 48 for international travel. Alcohol is not reimbursable unless it"
+        },
+        {
+          "rank": 3,
+          "source": "cedar_benefits_guide.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.231565,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 2 Allowances and pension Learning allowance Employees receive a GBP 1,500 learning allowance per calendar year after completing probation. The allowance cannot be"
+        },
+        {
+          "rank": 4,
+          "source": "project_orion_brief.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.252177,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 2 Measures and delivery risks Success measures The programme aims to reduce stockout events by 12 percent and achieve at least 92 percent weekly demand-forecast a"
+        },
+        {
+          "rank": 5,
+          "source": "coral_procurement_rules.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.231866,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Coral Procurement Rules Purchasing controls This document is fictional and exists only to test retrieval, grounded answers, source separation, citations, and re"
+        }
+      ]
+    },
+    {
+      "case_id": "context-01",
+      "category": "context",
+      "question": "Who can approve a temporary exception to Aurora office attendance and how long can it last?",
+      "supported": true,
+      "expected_count": 1,
+      "matched_count": 1,
+      "source_recall": 1,
+      "location_recall": 1,
+      "evidence_recall": 1.0,
+      "reciprocal_rank": 1.0,
+      "latency_ms": 12.082,
+      "top_score": 0.631816,
+      "retrieved": [
+        {
+          "rank": 1,
+          "source": "aurora_remote_work_policy.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.631816,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Aurora Remote Work Policy Effective March 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation, citations, and"
+        },
+        {
+          "rank": 2,
+          "source": "summit_office_manual.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.417943,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Summit Office Operations Manual Workplace procedures This document is fictional and exists only to test retrieval, grounded answers, source separation, citation"
+        },
+        {
+          "rank": 3,
+          "source": "atlas_travel_policy.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.319505,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Atlas Travel and Expense Policy Effective 1 January 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation, cita"
+        },
+        {
+          "rank": 4,
+          "source": "summit_office_manual.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.277971,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 2 Safety and facilities Evacuation The primary assembly point is Riverside Square. If Riverside Square is unavailable, staff must use the secondary assembly point"
+        },
+        {
+          "rank": 5,
+          "source": "delta_data_retention_schedule.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.313754,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Delta Data Retention Schedule Approved corporate retention periods This document is fictional and exists only to test retrieval, grounded answers, source separa"
+        }
+      ]
+    },
+    {
+      "case_id": "context-02",
+      "category": "context",
+      "question": "What happens when a priority-one Bluebird incident is still unresolved after 45 minutes?",
+      "supported": true,
+      "expected_count": 1,
+      "matched_count": 1,
+      "source_recall": 1,
+      "location_recall": 1,
+      "evidence_recall": 1.0,
+      "reciprocal_rank": 1.0,
+      "latency_ms": 13.1,
+      "top_score": 0.69731,
+      "retrieved": [
+        {
+          "rank": 1,
+          "source": "bluebird_customer_support_handbook.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.69731,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Bluebird Customer Support Handbook Service standards for 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation,"
+        },
+        {
+          "rank": 2,
+          "source": "falcon_business_continuity_plan.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.417804,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Falcon Business Continuity Plan Critical service recovery This document is fictional and exists only to test retrieval, grounded answers, source separation, cit"
+        },
+        {
+          "rank": 3,
+          "source": "project_orion_brief.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.310781,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 2 Measures and delivery risks Success measures The programme aims to reduce stockout events by 12 percent and achieve at least 92 percent weekly demand-forecast a"
+        },
+        {
+          "rank": 4,
+          "source": "summit_office_manual.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.293033,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 2 Safety and facilities Evacuation The primary assembly point is Riverside Square. If Riverside Square is unavailable, staff must use the secondary assembly point"
+        },
+        {
+          "rank": 5,
+          "source": "beacon_security_standard.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.239777,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 2 Incidents and records Incident reporting A suspected security incident must be reported to the Security Desk within 20 minutes of discovery. Staff must preserve"
+        }
+      ]
+    },
+    {
+      "case_id": "context-03",
+      "category": "context",
+      "question": "What experience is required before taking Ember's Leadership Essentials course?",
+      "supported": true,
+      "expected_count": 1,
+      "matched_count": 1,
+      "source_recall": 1,
+      "location_recall": 1,
+      "evidence_recall": 1.0,
+      "reciprocal_rank": 1.0,
+      "latency_ms": 12.912,
+      "top_score": 0.720002,
+      "retrieved": [
+        {
+          "rank": 1,
+          "source": "ember_training_catalogue.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.720002,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Ember Training Catalogue Professional development programme This document is fictional and exists only to test retrieval, grounded answers, source separation, c"
+        },
+        {
+          "rank": 2,
+          "source": "atlas_travel_policy.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.265001,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Atlas Travel and Expense Policy Effective 1 January 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation, cita"
+        },
+        {
+          "rank": 3,
+          "source": "aurora_remote_work_policy.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.190601,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Aurora Remote Work Policy Effective March 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation, citations, and"
+        },
+        {
+          "rank": 4,
+          "source": "summit_office_manual.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.197331,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Summit Office Operations Manual Workplace procedures This document is fictional and exists only to test retrieval, grounded answers, source separation, citation"
+        },
+        {
+          "rank": 5,
+          "source": "falcon_business_continuity_plan.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.177596,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Falcon Business Continuity Plan Critical service recovery This document is fictional and exists only to test retrieval, grounded answers, source separation, cit"
+        }
+      ]
+    },
+    {
+      "case_id": "context-04",
+      "category": "context",
+      "question": "Whose approval is needed before an Indigo production release?",
+      "supported": true,
+      "expected_count": 1,
+      "matched_count": 1,
+      "source_recall": 1,
+      "location_recall": 1,
+      "evidence_recall": 1.0,
+      "reciprocal_rank": 1.0,
+      "latency_ms": 11.543,
+      "top_score": 0.521782,
+      "retrieved": [
+        {
+          "rank": 1,
+          "source": "indigo_product_release_process.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.521782,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Indigo Product Release Process Production change governance This document is fictional and exists only to test retrieval, grounded answers, source separation, c"
+        },
+        {
+          "rank": 2,
+          "source": "coral_procurement_rules.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.346012,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Coral Procurement Rules Purchasing controls This document is fictional and exists only to test retrieval, grounded answers, source separation, citations, and re"
+        },
+        {
+          "rank": 3,
+          "source": "aurora_remote_work_policy.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.269002,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Aurora Remote Work Policy Effective March 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation, citations, and"
+        },
+        {
+          "rank": 4,
+          "source": "project_orion_brief.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.292154,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Project Orion Delivery Brief Inventory forecasting programme This document is fictional and exists only to test retrieval, grounded answers, source separation, "
+        },
+        {
+          "rank": 5,
+          "source": "atlas_travel_policy.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.224511,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Atlas Travel and Expense Policy Effective 1 January 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation, cita"
+        }
+      ]
+    },
+    {
+      "case_id": "multi-01",
+      "category": "multi_source",
+      "question": "Compare Aurora's home-office allowance with Harbour's monthly home internet support.",
+      "supported": true,
+      "expected_count": 2,
+      "matched_count": 2,
+      "source_recall": 1,
+      "location_recall": 1,
+      "evidence_recall": 1.0,
+      "reciprocal_rank": 1.0,
+      "latency_ms": 12.456,
+      "top_score": 0.547347,
+      "retrieved": [
+        {
+          "rank": 1,
+          "source": "aurora_remote_work_policy.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.547347,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Aurora Remote Work Policy Effective March 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation, citations, and"
+        },
+        {
+          "rank": 2,
+          "source": "harbour_expenses_guide.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.382986,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Harbour Expenses Guide Employee reimbursement rules This document is fictional and exists only to test retrieval, grounded answers, source separation, citations"
+        },
+        {
+          "rank": 3,
+          "source": "summit_office_manual.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.285756,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Summit Office Operations Manual Workplace procedures This document is fictional and exists only to test retrieval, grounded answers, source separation, citation"
+        },
+        {
+          "rank": 4,
+          "source": "project_orion_brief.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.29561,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Project Orion Delivery Brief Inventory forecasting programme This document is fictional and exists only to test retrieval, grounded answers, source separation, "
+        },
+        {
+          "rank": 5,
+          "source": "cedar_benefits_guide.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.246096,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Cedar Employee Benefits Guide Benefits year 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation, citations, a"
+        }
+      ]
+    },
+    {
+      "case_id": "multi-02",
+      "category": "multi_source",
+      "question": "Compare Harbour's expense claim deadline with Delta's deletion period for unsuccessful applicants.",
+      "supported": true,
+      "expected_count": 2,
+      "matched_count": 2,
+      "source_recall": 1,
+      "location_recall": 1,
+      "evidence_recall": 1.0,
+      "reciprocal_rank": 1.0,
+      "latency_ms": 13.055,
+      "top_score": 0.506264,
+      "retrieved": [
+        {
+          "rank": 1,
+          "source": "delta_data_retention_schedule.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.506264,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Delta Data Retention Schedule Approved corporate retention periods This document is fictional and exists only to test retrieval, grounded answers, source separa"
+        },
+        {
+          "rank": 2,
+          "source": "harbour_expenses_guide.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.48314,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Harbour Expenses Guide Employee reimbursement rules This document is fictional and exists only to test retrieval, grounded answers, source separation, citations"
+        },
+        {
+          "rank": 3,
+          "source": "falcon_business_continuity_plan.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.396798,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Falcon Business Continuity Plan Critical service recovery This document is fictional and exists only to test retrieval, grounded answers, source separation, cit"
+        },
+        {
+          "rank": 4,
+          "source": "atlas_travel_policy.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.300935,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 2 Expenses and deadlines Meal limits The daily meal limit is GBP 32 for domestic travel and GBP 48 for international travel. Alcohol is not reimbursable unless it"
+        },
+        {
+          "rank": 5,
+          "source": "bluebird_customer_support_handbook.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.331964,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Bluebird Customer Support Handbook Service standards for 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation,"
+        }
+      ]
+    },
+    {
+      "case_id": "multi-03",
+      "category": "multi_source",
+      "question": "What does 15 minutes mean in the Bluebird and Falcon documents?",
+      "supported": true,
+      "expected_count": 2,
+      "matched_count": 2,
+      "source_recall": 1,
+      "location_recall": 1,
+      "evidence_recall": 1.0,
+      "reciprocal_rank": 1.0,
+      "latency_ms": 12.47,
+      "top_score": 0.482526,
+      "retrieved": [
+        {
+          "rank": 1,
+          "source": "bluebird_customer_support_handbook.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.482526,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Bluebird Customer Support Handbook Service standards for 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation,"
+        },
+        {
+          "rank": 2,
+          "source": "falcon_business_continuity_plan.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.431688,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Falcon Business Continuity Plan Critical service recovery This document is fictional and exists only to test retrieval, grounded answers, source separation, cit"
+        },
+        {
+          "rank": 3,
+          "source": "delta_data_retention_schedule.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.26487,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Delta Data Retention Schedule Approved corporate retention periods This document is fictional and exists only to test retrieval, grounded answers, source separa"
+        },
+        {
+          "rank": 4,
+          "source": "summit_office_manual.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.261066,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Summit Office Operations Manual Workplace procedures This document is fictional and exists only to test retrieval, grounded answers, source separation, citation"
+        },
+        {
+          "rank": 5,
+          "source": "aurora_remote_work_policy.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.190622,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Aurora Remote Work Policy Effective March 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation, citations, and"
+        }
+      ]
+    },
+    {
+      "case_id": "multi-04",
+      "category": "multi_source",
+      "question": "What Thursday requirements appear in the Aurora and Indigo policies?",
+      "supported": true,
+      "expected_count": 2,
+      "matched_count": 2,
+      "source_recall": 1,
+      "location_recall": 1,
+      "evidence_recall": 1.0,
+      "reciprocal_rank": 1.0,
+      "latency_ms": 12.695,
+      "top_score": 0.552291,
+      "retrieved": [
+        {
+          "rank": 1,
+          "source": "aurora_remote_work_policy.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.552291,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Aurora Remote Work Policy Effective March 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation, citations, and"
+        },
+        {
+          "rank": 2,
+          "source": "indigo_product_release_process.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.326853,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Indigo Product Release Process Production change governance This document is fictional and exists only to test retrieval, grounded answers, source separation, c"
+        },
+        {
+          "rank": 3,
+          "source": "juniper_visitor_safety_guide.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.331615,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Juniper Visitor Safety Guide Rules for guests and contractors This document is fictional and exists only to test retrieval, grounded answers, source separation,"
+        },
+        {
+          "rank": 4,
+          "source": "atlas_travel_policy.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.359094,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Atlas Travel and Expense Policy Effective 1 January 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation, cita"
+        },
+        {
+          "rank": 5,
+          "source": "summit_office_manual.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.305532,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Summit Office Operations Manual Workplace procedures This document is fictional and exists only to test retrieval, grounded answers, source separation, citation"
+        }
+      ]
+    },
+    {
+      "case_id": "unsupported-01",
+      "category": "unsupported",
+      "question": "What food is served in the company cafeteria on Fridays?",
+      "supported": false,
+      "expected_count": 0,
+      "matched_count": 0,
+      "source_recall": null,
+      "location_recall": null,
+      "evidence_recall": null,
+      "reciprocal_rank": null,
+      "latency_ms": 13.852,
+      "top_score": 0.293585,
+      "retrieved": [
+        {
+          "rank": 1,
+          "source": "atlas_travel_policy.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.293585,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 2 Expenses and deadlines Meal limits The daily meal limit is GBP 32 for domestic travel and GBP 48 for international travel. Alcohol is not reimbursable unless it"
+        },
+        {
+          "rank": 2,
+          "source": "summit_office_manual.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.311646,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Summit Office Operations Manual Workplace procedures This document is fictional and exists only to test retrieval, grounded answers, source separation, citation"
+        },
+        {
+          "rank": 3,
+          "source": "falcon_business_continuity_plan.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.241898,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Falcon Business Continuity Plan Critical service recovery This document is fictional and exists only to test retrieval, grounded answers, source separation, cit"
+        },
+        {
+          "rank": 4,
+          "source": "summit_office_manual.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.181767,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 2 Safety and facilities Evacuation The primary assembly point is Riverside Square. If Riverside Square is unavailable, staff must use the secondary assembly point"
+        },
+        {
+          "rank": 5,
+          "source": "cedar_benefits_guide.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.160212,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Cedar Employee Benefits Guide Benefits year 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation, citations, a"
+        }
+      ]
+    },
+    {
+      "case_id": "unsupported-02",
+      "category": "unsupported",
+      "question": "What is the chief executive's date of birth?",
+      "supported": false,
+      "expected_count": 0,
+      "matched_count": 0,
+      "source_recall": null,
+      "location_recall": null,
+      "evidence_recall": null,
+      "reciprocal_rank": null,
+      "latency_ms": 13.838,
+      "top_score": 0.189056,
+      "retrieved": [
+        {
+          "rank": 1,
+          "source": "summit_office_manual.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.189056,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Summit Office Operations Manual Workplace procedures This document is fictional and exists only to test retrieval, grounded answers, source separation, citation"
+        },
+        {
+          "rank": 2,
+          "source": "project_orion_brief.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.140596,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 2 Measures and delivery risks Success measures The programme aims to reduce stockout events by 12 percent and achieve at least 92 percent weekly demand-forecast a"
+        },
+        {
+          "rank": 3,
+          "source": "project_orion_brief.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.090365,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Project Orion Delivery Brief Inventory forecasting programme This document is fictional and exists only to test retrieval, grounded answers, source separation, "
+        },
+        {
+          "rank": 4,
+          "source": "ember_training_catalogue.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.12764,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Ember Training Catalogue Professional development programme This document is fictional and exists only to test retrieval, grounded answers, source separation, c"
+        },
+        {
+          "rank": 5,
+          "source": "coral_procurement_rules.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.034972,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Coral Procurement Rules Purchasing controls This document is fictional and exists only to test retrieval, grounded answers, source separation, citations, and re"
+        }
+      ]
+    }
+  ]
+}
