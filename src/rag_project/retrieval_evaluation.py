@@ -329,6 +329,7 @@ def build_report(
     top_k: int,
     corpus: list[str],
     retriever: str | None = None,
+    retriever_config: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Create a JSON-serializable report with explicit benchmark metadata."""
     report = {
@@ -341,6 +342,8 @@ def build_report(
     }
     if retriever is not None:
         report["retriever"] = retriever
+    if retriever_config is not None:
+        report["retriever_config"] = retriever_config
     return report
 
 

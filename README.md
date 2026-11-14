@@ -23,8 +23,8 @@ tested before the next feature is added.
 - Add, update, refresh, and remove saved PDF and website sources
 - Save questions, answers, citations, and timestamps in local SQLite history
 - Search, inspect, export, and clear question history through the interface
-- Search for the five chunks most relevant to a natural-language question
-  using combined semantic similarity and exact-term matching
+- Search semantic and BM25 candidate lists, then combine their ranks with
+  deterministic weighted reciprocal rank fusion
 - Select exactly which saved PDFs and websites may be searched for each question
 - Keep previous uploads in a compact document-library selector and automatically
   select newly added or updated sources
@@ -278,6 +278,20 @@ query time from 13.4 ms to approximately 0.1 ms. These timings exclude one-time
 corpus loading and index construction. Its detailed report is stored in
 `evaluation/retrieval_v3_bm25_results.json`.
 
+Run the production hybrid retriever with:
+
+```powershell
+uv run python evaluate_retrieval.py --retriever hybrid
+```
+
+Hybrid retrieval takes the top 20 pure-vector and BM25 candidates, removes
+duplicate chunks, and combines their positions with weighted reciprocal rank
+fusion. The frozen configuration uses RRF `k=5`, vector weight `1`, and BM25
+weight `3`; the values and candidate count are written into every report for
+reproducibility. It achieved 100% Recall@5 and 1.000 MRR on the committed
+benchmark. The detailed result is stored in
+`evaluation/retrieval_v3_hybrid_results.json`.
+
 Use one or more custom directories when comparing another corpus:
 
 ```powershell
@@ -371,7 +385,7 @@ complex tables, so OCR-labelled evidence should be checked against the source.
 
 - [x] Establish a versioned JSON retrieval benchmark and baseline report
 - [x] Add a proper, independently benchmarked BM25 keyword retriever
-- [ ] Fuse semantic and keyword rankings with a deterministic hybrid strategy
+- [x] Fuse semantic and keyword rankings with deterministic weighted RRF
 - [ ] Add sentence-window context expansion after retrieval
 - [ ] Add a reranking stage and compare it against the frozen baseline
 - [ ] Add regression thresholds to automated tests and CI
@@ -384,7 +398,7 @@ complex tables, so OCR-labelled evidence should be checked against the source.
 - Website discovery follows only same-hostname HTML links and stops after five
   unique pages.
 - The current embedding model is intended primarily for English text.
-- Answer quality depends on whether semantic search retrieves the right passage.
+- Answer quality depends on whether hybrid retrieval finds the right passage.
 - A small local model can still make mistakes, so the visible evidence and
   citations should always be checked.
 - Severe misspellings can cause an answerable question to be refused, and a

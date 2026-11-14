@@ -6,7 +6,12 @@ from pathlib import Path
 
 from src.rag_project.bm25 import BM25Index
 from src.rag_project.chunker import chunk_documents
-from src.rag_project.embeddings import EmbeddedChunk, embed_chunks, load_embedding_model
+from src.rag_project.embeddings import (
+    EmbeddedChunk,
+    embed_chunks,
+    load_embedding_model,
+)
+from src.rag_project.hybrid import HybridRetriever
 from src.rag_project.pdf_loader import extract_pdf_files
 from src.rag_project.retrieval_evaluation import (
     build_report,
@@ -38,7 +43,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--retriever",
-        choices=("semantic", "bm25"),
+        choices=("semantic", "bm25", "hybrid"),
         default="semantic",
         help="Retrieval implementation to benchmark (default: semantic)",
     )
@@ -70,14 +75,22 @@ def main() -> None:
     benchmark_payload = json.loads(args.questions.read_text(encoding="utf-8"))
     documents = extract_pdf_files((path.name, path.read_bytes()) for path in pdf_paths)
     chunks = chunk_documents(documents)
-    if args.retriever == "semantic":
+    retriever_config = None
+    if args.retriever in {"semantic", "hybrid"}:
         # The baseline must be reproducible and must not change because a remote
         # model repository happened to be available during one run.
         model = load_embedding_model(local_only=True)
         embedded_chunks = embed_chunks(chunks, model)
-        search = lambda question: semantic_search(
-            question, embedded_chunks, model, top_k=args.top_k
-        )
+        if args.retriever == "hybrid":
+            hybrid_retriever = HybridRetriever(embedded_chunks, model)
+            retriever_config = hybrid_retriever.configuration
+            search = lambda question: hybrid_retriever.search(
+                question, top_k=args.top_k
+            )
+        else:
+            search = lambda question: semantic_search(
+                question, embedded_chunks, model, top_k=args.top_k
+            )
     else:
         # BM25 needs text and metadata, not embedding vectors. The shared
         # wrapper keeps its output compatible with the existing result model.
@@ -110,11 +123,14 @@ def main() -> None:
         top_k=args.top_k,
         corpus=[path.name for path in pdf_paths],
         retriever=args.retriever,
+        retriever_config=retriever_config,
     )
     output_path = args.output or Path(
-        "evaluation/retrieval_v3_bm25_results.json"
-        if args.retriever == "bm25"
-        else "evaluation/retrieval_v3_baseline_results.json"
+        {
+            "semantic": "evaluation/retrieval_v3_baseline_results.json",
+            "bm25": "evaluation/retrieval_v3_bm25_results.json",
+            "hybrid": "evaluation/retrieval_v3_hybrid_results.json",
+        }[args.retriever]
     )
     write_report(output_path, report)
     summary = report["summary"]

@@ -40,7 +40,41 @@ def semantic_search(
     model: TextEncoder,
     top_k: int = 5,
 ) -> list[SearchResult]:
-    """Return the chunks whose meanings are closest to the query."""
+    """Return chunks ranked by vector similarity plus the legacy lexical bonus."""
+    return _vector_ranked_search(
+        query,
+        embedded_chunks,
+        model,
+        top_k=top_k,
+        lexical_weight=0.2,
+    )
+
+
+def vector_search(
+    query: str,
+    embedded_chunks: list[EmbeddedChunk],
+    model: TextEncoder,
+    top_k: int = 5,
+) -> list[SearchResult]:
+    """Return chunks ranked only by normalized vector similarity."""
+    return _vector_ranked_search(
+        query,
+        embedded_chunks,
+        model,
+        top_k=top_k,
+        lexical_weight=0.0,
+    )
+
+
+def _vector_ranked_search(
+    query: str,
+    embedded_chunks: list[EmbeddedChunk],
+    model: TextEncoder,
+    *,
+    top_k: int,
+    lexical_weight: float,
+) -> list[SearchResult]:
+    """Rank chunks with vectors and an optional backward-compatible term bonus."""
     if not query.strip():
         raise ValueError("Enter a question before searching.")
     if top_k <= 0:
@@ -69,7 +103,7 @@ def semantic_search(
         )
         # Semantic similarity remains primary. The lexical bonus protects exact
         # names, dates, and policy terms from being displaced by vague matches.
-        combined_score = semantic_score + (0.2 * lexical_coverage)
+        combined_score = semantic_score + (lexical_weight * lexical_coverage)
         ranked_results.append(
             (combined_score, SearchResult(item, semantic_score))
         )

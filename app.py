@@ -11,8 +11,9 @@ from src.rag_project.generator import (
     OllamaError,
     generate_grounded_answer,
 )
+from src.rag_project.hybrid import HybridRetriever
 from src.rag_project.pdf_loader import extract_pdf_files
-from src.rag_project.search import SearchResult, semantic_search
+from src.rag_project.search import SearchResult
 from src.rag_project.website_loader import WebsiteLoadError, crawl_website
 from src.rag_project.vector_store import (
     PersistentVectorStore,
@@ -520,7 +521,7 @@ if storage_failure:
 st.markdown(
     """
     <div class="workspace-head">
-        <div class="workspace-kicker">Private knowledge workspace · Version 2</div>
+        <div class="workspace-kicker">Private knowledge workspace · Version 3</div>
         <div class="workspace-title-row">
             <h1>Ask your documents.</h1>
             <span class="local-mark">Local by design</span>
@@ -705,7 +706,9 @@ with st.form("semantic_search_form"):
 
 if search_submitted:
     try:
-        results = semantic_search(question, searchable_chunks, get_embedding_model())
+        results = HybridRetriever(
+            searchable_chunks, get_embedding_model()
+        ).search(question)
     except ValueError as error:
         st.warning(str(error))
     else:
