@@ -12,8 +12,8 @@ from src.rag_project.generator import (
     generate_grounded_answer,
 )
 from src.rag_project.pdf_loader import extract_pdf_files
+from src.rag_project.reranker import RerankedRetriever
 from src.rag_project.search import SearchResult
-from src.rag_project.sentence_window import SentenceWindowRetriever
 from src.rag_project.website_loader import WebsiteLoadError, crawl_website
 from src.rag_project.vector_store import (
     PersistentVectorStore,
@@ -706,7 +706,7 @@ with st.form("semantic_search_form"):
 
 if search_submitted:
     try:
-        results = SentenceWindowRetriever(
+        results = RerankedRetriever(
             searchable_chunks, get_embedding_model()
         ).search(question)
     except ValueError as error:

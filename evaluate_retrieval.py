@@ -19,6 +19,7 @@ from src.rag_project.retrieval_evaluation import (
     load_retrieval_cases,
     write_report,
 )
+from src.rag_project.reranker import RerankedRetriever
 from src.rag_project.search import semantic_search
 from src.rag_project.sentence_window import SentenceWindowRetriever
 
@@ -44,7 +45,13 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--retriever",
-        choices=("semantic", "bm25", "hybrid", "hybrid-window"),
+        choices=(
+            "semantic",
+            "bm25",
+            "hybrid",
+            "hybrid-window",
+            "reranked",
+        ),
         default="semantic",
         help="Retrieval implementation to benchmark (default: semantic)",
     )
@@ -77,12 +84,23 @@ def main() -> None:
     documents = extract_pdf_files((path.name, path.read_bytes()) for path in pdf_paths)
     chunks = chunk_documents(documents)
     retriever_config = None
-    if args.retriever in {"semantic", "hybrid", "hybrid-window"}:
+    if args.retriever in {
+        "semantic",
+        "hybrid",
+        "hybrid-window",
+        "reranked",
+    }:
         # The baseline must be reproducible and must not change because a remote
         # model repository happened to be available during one run.
         model = load_embedding_model(local_only=True)
         embedded_chunks = embed_chunks(chunks, model)
-        if args.retriever == "hybrid-window":
+        if args.retriever == "reranked":
+            reranked_retriever = RerankedRetriever(embedded_chunks, model)
+            retriever_config = reranked_retriever.configuration
+            search = lambda question: reranked_retriever.search(
+                question, top_k=args.top_k
+            )
+        elif args.retriever == "hybrid-window":
             sentence_window_retriever = SentenceWindowRetriever(
                 embedded_chunks, model
             )
@@ -140,6 +158,7 @@ def main() -> None:
             "bm25": "evaluation/retrieval_v3_bm25_results.json",
             "hybrid": "evaluation/retrieval_v3_hybrid_results.json",
             "hybrid-window": "evaluation/retrieval_v3_sentence_window_results.json",
+            "reranked": "evaluation/retrieval_v3_reranked_results.json",
         }[args.retriever]
     )
     write_report(output_path, report)

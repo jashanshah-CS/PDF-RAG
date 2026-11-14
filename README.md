@@ -27,6 +27,8 @@ tested before the next feature is added.
   deterministic weighted reciprocal rank fusion
 - Focus retrieved evidence on two relevant sentence anchors and their immediate
   neighbours, with semantic fallback for paraphrased questions
+- Rerank the top five focused candidates using original, semantic, and BM25
+  ranks before sending evidence to the answer model
 - Select exactly which saved PDFs and websites may be searched for each question
 - Keep previous uploads in a compact document-library selector and automatically
   select newly added or updated sources
@@ -60,6 +62,10 @@ Source-neutral chunks with inherited metadata
 Persistent ChromaDB index in data/chroma
     ↓
 Hybrid semantic and exact-term search
+    ↓
+Confidence-aware sentence windows
+    ↓
+Deterministic local reranking
     ↓
 Top five evidence chunks
     ↓
@@ -311,6 +317,22 @@ accepted because it removes roughly one third of the text sent to local Qwen.
 Detailed committed results are in
 `evaluation/retrieval_v3_sentence_window_results.json`.
 
+Run the production reranker with:
+
+```powershell
+uv run python evaluate_retrieval.py --retriever reranked
+```
+
+The offline reranker re-evaluates the five focused candidates using their
+original hybrid rank, vector similarity rank, and focused-text BM25 rank. It
+combines those lists with deterministic RRF using weights `3`, `1`, and `2`
+respectively. The committed benchmark retained 100% Recall@5 and 1.000 MRR.
+On the broader private 24-case PDF benchmark, it retained 100% Recall@5 and
+improved MRR from 0.871 to 0.879. Mean retrieval time increased from about
+0.96 to 1.28 seconds, a roughly 0.32-second cost for the improved ordering.
+Detailed committed results are in
+`evaluation/retrieval_v3_reranked_results.json`.
+
 Use one or more custom directories when comparing another corpus:
 
 ```powershell
@@ -406,7 +428,7 @@ complex tables, so OCR-labelled evidence should be checked against the source.
 - [x] Add a proper, independently benchmarked BM25 keyword retriever
 - [x] Fuse semantic and keyword rankings with deterministic weighted RRF
 - [x] Add confidence-aware sentence-window context after retrieval
-- [ ] Add a reranking stage and compare it against the frozen baseline
+- [x] Add a reranking stage and compare it against the frozen baseline
 - [ ] Add regression thresholds to automated tests and CI
 
 ## Limitations
