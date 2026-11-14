@@ -54,6 +54,8 @@ class RetrievedLocation:
     page: int | None
     url: str | None
     score: float
+    text_characters: int
+    original_text_characters: int
     text_preview: str
 
 
@@ -214,6 +216,13 @@ def evaluate_retrieval_case(
             page=result.embedded_chunk.chunk.location.page_number,
             url=result.embedded_chunk.chunk.location.url,
             score=round(result.score, 6),
+            text_characters=len(result.embedded_chunk.chunk.text),
+            original_text_characters=int(
+                result.embedded_chunk.chunk.metadata.get(
+                    "sentence_window_original_characters",
+                    len(result.embedded_chunk.chunk.text),
+                )
+            ),
             text_preview=" ".join(result.embedded_chunk.chunk.text.split())[:240],
         )
         for rank, result in enumerate(results, start=1)
@@ -295,6 +304,15 @@ def summarize_results(results: list[RetrievalCaseResult], top_k: int) -> dict[st
     unsupported_scores = [
         result.top_score for result in unsupported if result.top_score is not None
     ]
+    retrieved_locations = [
+        location for result in results for location in result.retrieved
+    ]
+    context_characters = sum(
+        location.text_characters for location in retrieved_locations
+    )
+    original_context_characters = sum(
+        location.original_text_characters for location in retrieved_locations
+    )
     return {
         "case_count": len(results),
         "supported_case_count": len(supported),
@@ -319,6 +337,26 @@ def summarize_results(results: list[RetrievalCaseResult], top_k: int) -> dict[st
         "unsupported_top_score_mean": (
             round(mean(unsupported_scores), 6) if unsupported_scores else None
         ),
+        "context": {
+            "mean_result_characters": (
+                round(context_characters / len(retrieved_locations), 1)
+                if retrieved_locations
+                else 0.0
+            ),
+            "mean_original_characters": (
+                round(original_context_characters / len(retrieved_locations), 1)
+                if retrieved_locations
+                else 0.0
+            ),
+            "reduction_percent": (
+                round(
+                    100 * (1 - context_characters / original_context_characters),
+                    1,
+                )
+                if original_context_characters
+                else 0.0
+            ),
+        },
     }
 
 

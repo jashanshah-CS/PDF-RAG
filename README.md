@@ -25,6 +25,8 @@ tested before the next feature is added.
 - Search, inspect, export, and clear question history through the interface
 - Search semantic and BM25 candidate lists, then combine their ranks with
   deterministic weighted reciprocal rank fusion
+- Focus retrieved evidence on two relevant sentence anchors and their immediate
+  neighbours, with semantic fallback for paraphrased questions
 - Select exactly which saved PDFs and websites may be searched for each question
 - Keep previous uploads in a compact document-library selector and automatically
   select newly added or updated sources
@@ -292,6 +294,23 @@ reproducibility. It achieved 100% Recall@5 and 1.000 MRR on the committed
 benchmark. The detailed result is stored in
 `evaluation/retrieval_v3_hybrid_results.json`.
 
+Run the sentence-window postprocessor with:
+
+```powershell
+uv run python evaluate_retrieval.py --retriever hybrid-window
+```
+
+After hybrid retrieval, high-confidence exact matches select two sentence
+anchors and one neighbouring sentence on each side. Ambiguous paraphrases use a
+batched semantic fallback. The source, page, chunk identity, ranking score, and
+original embedding remain unchanged. The committed benchmark retained 100%
+Recall@5 and 1.000 MRR while reducing retrieved context by 21.9%. The broader
+private PDF benchmark retained 100% Recall@5 and 0.871 MRR while reducing
+context by 33.5%. The private run added about 0.89 seconds to retrieval; this is
+accepted because it removes roughly one third of the text sent to local Qwen.
+Detailed committed results are in
+`evaluation/retrieval_v3_sentence_window_results.json`.
+
 Use one or more custom directories when comparing another corpus:
 
 ```powershell
@@ -386,7 +405,7 @@ complex tables, so OCR-labelled evidence should be checked against the source.
 - [x] Establish a versioned JSON retrieval benchmark and baseline report
 - [x] Add a proper, independently benchmarked BM25 keyword retriever
 - [x] Fuse semantic and keyword rankings with deterministic weighted RRF
-- [ ] Add sentence-window context expansion after retrieval
+- [x] Add confidence-aware sentence-window context after retrieval
 - [ ] Add a reranking stage and compare it against the frozen baseline
 - [ ] Add regression thresholds to automated tests and CI
 

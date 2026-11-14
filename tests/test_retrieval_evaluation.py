@@ -24,6 +24,7 @@ def result(
     *,
     page: int | None = 1,
     url: str | None = None,
+    metadata: dict | None = None,
 ) -> SearchResult:
     source_type = SourceType.WEBSITE if url else SourceType.PDF
     chunk = DocumentChunk(
@@ -34,6 +35,7 @@ def result(
         text=text,
         location=SourceLocation(page_number=page, url=url),
         added_at=datetime(2026, 11, 12, tzinfo=UTC),
+        metadata=metadata or {},
     )
     return SearchResult(EmbeddedChunk(chunk, (1.0, 0.0)), score)
 
@@ -182,6 +184,7 @@ def test_summary_excludes_unsupported_probes_from_recall() -> None:
     assert summary["mean_reciprocal_rank"] == 1.0
     assert summary["unsupported_case_count"] == 1
     assert summary["unsupported_top_score_mean"] == 0.4
+    assert summary["context"]["reduction_percent"] == 0.0
 
 
 def test_report_contains_corpus_and_serializable_details() -> None:
@@ -203,3 +206,28 @@ def test_report_contains_corpus_and_serializable_details() -> None:
     assert report["corpus"] == ["policy.pdf"]
     assert report["results"][0]["retrieved"][0]["source"] == "policy.pdf"
     json.dumps(report)
+
+
+def test_summary_measures_sentence_window_context_reduction() -> None:
+    measured = evaluate_retrieval_case(
+        RetrievalCase(
+            "window-1",
+            "context",
+            "Question?",
+            (ExpectedLocation("policy.pdf", 1, evidence=("Short",)),),
+        ),
+        lambda question: [
+            result(
+                "policy.pdf",
+                "Short evidence.",
+                0.9,
+                metadata={"sentence_window_original_characters": 100},
+            )
+        ],
+    )
+
+    summary = summarize_results([measured], top_k=5)
+
+    assert summary["context"]["mean_original_characters"] == 100.0
+    assert summary["context"]["mean_result_characters"] == 15.0
+    assert summary["context"]["reduction_percent"] == 85.0
