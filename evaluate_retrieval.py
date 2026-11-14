@@ -4,8 +4,9 @@ import argparse
 import json
 from pathlib import Path
 
+from src.rag_project.bm25 import BM25Index
 from src.rag_project.chunker import chunk_documents
-from src.rag_project.embeddings import embed_chunks, load_embedding_model
+from src.rag_project.embeddings import EmbeddedChunk, embed_chunks, load_embedding_model
 from src.rag_project.pdf_loader import extract_pdf_files
 from src.rag_project.retrieval_evaluation import (
     build_report,
@@ -33,8 +34,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path("evaluation/retrieval_v3_baseline_results.json"),
-        help="Destination for the JSON report",
+        help="Destination for the JSON report; defaults according to retriever",
+    )
+    parser.add_argument(
+        "--retriever",
+        choices=("semantic", "bm25"),
+        default="semantic",
+        help="Retrieval implementation to benchmark (default: semantic)",
     )
     parser.add_argument("--top-k", type=int, default=5)
     args = parser.parse_args()
@@ -64,19 +70,26 @@ def main() -> None:
     benchmark_payload = json.loads(args.questions.read_text(encoding="utf-8"))
     documents = extract_pdf_files((path.name, path.read_bytes()) for path in pdf_paths)
     chunks = chunk_documents(documents)
-    # The baseline must be reproducible and must not change because a remote
-    # model repository happened to be available during one run.
-    model = load_embedding_model(local_only=True)
-    embedded_chunks = embed_chunks(chunks, model)
+    if args.retriever == "semantic":
+        # The baseline must be reproducible and must not change because a remote
+        # model repository happened to be available during one run.
+        model = load_embedding_model(local_only=True)
+        embedded_chunks = embed_chunks(chunks, model)
+        search = lambda question: semantic_search(
+            question, embedded_chunks, model, top_k=args.top_k
+        )
+    else:
+        # BM25 needs text and metadata, not embedding vectors. The shared
+        # wrapper keeps its output compatible with the existing result model.
+        bm25_index = BM25Index([EmbeddedChunk(chunk, ()) for chunk in chunks])
+        search = lambda question: bm25_index.search(question, top_k=args.top_k)
 
     results = []
     for number, case in enumerate(cases, start=1):
         print(f"[{number}/{len(cases)}] {case.case_id}: {case.question}")
         result = evaluate_retrieval_case(
             case,
-            lambda question: semantic_search(
-                question, embedded_chunks, model, top_k=args.top_k
-            ),
+            search,
         )
         results.append(result)
         if result.supported:
@@ -96,13 +109,19 @@ def main() -> None:
         benchmark_name=benchmark_payload.get("name", args.questions.stem),
         top_k=args.top_k,
         corpus=[path.name for path in pdf_paths],
+        retriever=args.retriever,
     )
-    write_report(args.output, report)
+    output_path = args.output or Path(
+        "evaluation/retrieval_v3_bm25_results.json"
+        if args.retriever == "bm25"
+        else "evaluation/retrieval_v3_baseline_results.json"
+    )
+    write_report(output_path, report)
     summary = report["summary"]
     print(f"\nRecall@{args.top_k}: {summary[f'recall_at_{args.top_k}']:.1%}")
     print(f"MRR: {summary['mean_reciprocal_rank']:.3f}")
     print(f"Mean latency: {summary['latency_ms']['mean']:.1f} ms")
-    print(f"Report: {args.output.resolve()}")
+    print(f"Report: {output_path.resolve()}")
 
 
 if __name__ == "__main__":

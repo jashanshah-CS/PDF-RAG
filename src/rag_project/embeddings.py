@@ -1,11 +1,13 @@
 """Create local semantic embeddings for source-neutral document chunks."""
 
 from dataclasses import dataclass
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
 import numpy as np
 from numpy.typing import NDArray
-from sentence_transformers import SentenceTransformer
+
+if TYPE_CHECKING:
+    from sentence_transformers import SentenceTransformer
 
 from src.rag_project.documents import DocumentChunk
 from src.rag_project.config import SETTINGS
@@ -36,8 +38,11 @@ class EmbeddedChunk:
     embedding: tuple[float, ...]
 
 
-def load_embedding_model(*, local_only: bool | None = None) -> SentenceTransformer:
+def load_embedding_model(*, local_only: bool | None = None) -> "SentenceTransformer":
     """Load the free embedding model on CPU, optionally forbidding network access."""
+    # Keep the expensive ML stack out of keyword-only commands and unit tests.
+    from sentence_transformers import SentenceTransformer
+
     MODEL_CACHE.mkdir(parents=True, exist_ok=True)
     return SentenceTransformer(
         MODEL_NAME,

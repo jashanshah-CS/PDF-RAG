@@ -328,9 +328,10 @@ def build_report(
     benchmark_name: str,
     top_k: int,
     corpus: list[str],
+    retriever: str | None = None,
 ) -> dict[str, Any]:
     """Create a JSON-serializable report with explicit benchmark metadata."""
-    return {
+    report = {
         "schema_version": 1,
         "benchmark": benchmark_name,
         "top_k": top_k,
@@ -338,6 +339,9 @@ def build_report(
         "summary": summarize_results(results, top_k),
         "results": [asdict(result) for result in results],
     }
+    if retriever is not None:
+        report["retriever"] = retriever
+    return report
 
 
 def write_report(path: Path, report: dict[str, Any]) -> None:

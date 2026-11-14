@@ -264,6 +264,20 @@ coverage, and query latency. Unsupported probes are excluded from relevance
 metrics; their highest similarity scores are retained for future threshold
 calibration.
 
+Run the standalone BM25 keyword retriever against the identical cases and
+corpus:
+
+```powershell
+uv run python evaluate_retrieval.py --retriever bm25
+```
+
+BM25 uses an inverted index with inverse document frequency, term-frequency
+saturation, and document-length normalization. The latest run preserved 100%
+Recall@5, improved mean reciprocal rank from 0.958 to 1.000, and reduced mean
+query time from 13.4 ms to approximately 0.1 ms. These timings exclude one-time
+corpus loading and index construction. Its detailed report is stored in
+`evaluation/retrieval_v3_bm25_results.json`.
+
 Use one or more custom directories when comparing another corpus:
 
 ```powershell
@@ -356,7 +370,7 @@ complex tables, so OCR-labelled evidence should be checked against the source.
 ## Version 3 roadmap
 
 - [x] Establish a versioned JSON retrieval benchmark and baseline report
-- [ ] Replace the small exact-term bonus with a proper BM25 keyword retriever
+- [x] Add a proper, independently benchmarked BM25 keyword retriever
 - [ ] Fuse semantic and keyword rankings with a deterministic hybrid strategy
 - [ ] Add sentence-window context expansion after retrieval
 - [ ] Add a reranking stage and compare it against the frozen baseline
