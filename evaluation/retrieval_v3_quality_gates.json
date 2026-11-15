@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "description": "Deterministic acceptance thresholds for the Version 3 reranked retrieval benchmark.",
+  "required_values": {
+    "schema_version": 1,
+    "retriever": "reranked",
+    "top_k": 5,
+    "summary.case_count": 20,
+    "summary.supported_case_count": 18,
+    "summary.unsupported_case_count": 2
+  },
+  "minimum_values": {
+    "summary.recall_at_5": 1.0,
+    "summary.mean_reciprocal_rank": 1.0,
+    "summary.source_accuracy_at_5": 1.0,
+    "summary.location_accuracy_at_5": 1.0,
+    "summary.multi_source_coverage_at_5": 1.0,
+    "summary.context.reduction_percent": 20.0
+  }
+}

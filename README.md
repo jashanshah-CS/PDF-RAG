@@ -333,6 +333,22 @@ improved MRR from 0.871 to 0.879. Mean retrieval time increased from about
 Detailed committed results are in
 `evaluation/retrieval_v3_reranked_results.json`.
 
+### Automated retrieval quality gates
+
+Run the committed quality policy against the reranker report with:
+
+```powershell
+uv run python check_retrieval_quality.py
+```
+
+GitHub Actions also runs the complete Pytest suite, generates a fresh reranker
+report, and fails the build if deterministic retrieval quality drops below the
+committed thresholds. Recall@5, MRR, source accuracy, location accuracy,
+multi-source coverage, benchmark case counts, and context reduction are gated.
+Latency is measured but not gated because CI runner speed varies. See
+[`docs/RETRIEVAL_QUALITY_GATES.md`](docs/RETRIEVAL_QUALITY_GATES.md) for every
+threshold, the local workflow, failure behaviour, and CI design.
+
 Use one or more custom directories when comparing another corpus:
 
 ```powershell
@@ -429,7 +445,7 @@ complex tables, so OCR-labelled evidence should be checked against the source.
 - [x] Fuse semantic and keyword rankings with deterministic weighted RRF
 - [x] Add confidence-aware sentence-window context after retrieval
 - [x] Add a reranking stage and compare it against the frozen baseline
-- [ ] Add regression thresholds to automated tests and CI
+- [x] Add regression thresholds to automated tests and CI
 
 ## Limitations
 

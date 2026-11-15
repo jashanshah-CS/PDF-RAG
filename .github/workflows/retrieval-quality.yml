@@ -1,0 +1,53 @@
+name: Retrieval quality
+
+on:
+  push:
+    branches: [version-3]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          python-version: "3.12"
+
+      - name: Restore embedding model cache
+        uses: actions/cache@v4
+        with:
+          path: .model-cache
+          key: minilm-l6-v2-v1
+
+      - name: Install locked dependencies
+        run: uv sync --frozen
+
+      - name: Download embedding model when cache is empty
+        run: uv run python -c "from src.rag_project.embeddings import load_embedding_model; load_embedding_model(local_only=False)"
+
+      - name: Run complete test suite
+        run: uv run pytest -q
+
+      - name: Generate a fresh reranker benchmark
+        run: uv run python evaluate_retrieval.py --retriever reranked --output tmp/ci-reranked-results.json
+
+      - name: Enforce retrieval quality gates
+        run: uv run python check_retrieval_quality.py --report tmp/ci-reranked-results.json
+
+      - name: Upload benchmark report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: retrieval-benchmark-report
+          path: tmp/ci-reranked-results.json
+          if-no-files-found: ignore
