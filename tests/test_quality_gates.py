@@ -54,6 +54,17 @@ def test_rejects_non_numeric_measured_value() -> None:
     assert "summary.recall_at_5: 'perfect' is not numeric" in failures
 
 
+def test_rejects_context_reduction_below_cross_platform_floor() -> None:
+    regressed = report()
+    regressed["summary"]["context"]["reduction_percent"] = 9.9
+
+    failures = evaluate_quality_gates(regressed, policy())
+
+    assert (
+        "summary.context.reduction_percent: 9.9 < minimum 10.0" in failures
+    )
+
+
 def test_rejects_invalid_policy_schema() -> None:
     invalid_policy = policy()
     invalid_policy["schema_version"] = 2

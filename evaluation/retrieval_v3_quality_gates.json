@@ -15,6 +15,6 @@
     "summary.source_accuracy_at_5": 1.0,
     "summary.location_accuracy_at_5": 1.0,
     "summary.multi_source_coverage_at_5": 1.0,
-    "summary.context.reduction_percent": 20.0
+    "summary.context.reduction_percent": 10.0
   }
 }

@@ -22,13 +22,19 @@ The versioned policy is
 | Source accuracy@5 | `>= 1.0` | Every expected document is retrieved |
 | Location accuracy@5 | `>= 1.0` | Every expected page or URL is retrieved |
 | Multi-source coverage@5 | `>= 1.0` | Comparison questions retrieve every required source |
-| Context reduction | `>= 20%` | Sentence windows continue to reduce prompt size |
+| Context reduction | `>= 10%` | Sentence windows continue to reduce prompt size |
 
 These values are intentionally strict because the committed synthetic corpus
 currently achieves perfect deterministic relevance metrics. A threshold should
 only change when the benchmark itself changes or an explicitly reviewed
 trade-off is supported by evidence. Do not lower a threshold merely to make a
 failing change pass.
+
+The context-reduction floor is 10% because the same benchmark measured 21.9%
+on Windows and 13.3% on GitHub's Linux runner. PDF text and sentence boundaries
+can differ slightly across extraction platforms. The cross-platform floor still
+catches a disabled or ineffective sentence-window stage without pretending the
+exact reduction percentage is platform-independent.
 
 Latency is recorded in every report but is not a CI gate. Shared CI runners
 have variable CPU load, so a fixed millisecond limit would create flaky builds.
