@@ -6,6 +6,11 @@ asking questions about a PDF and receiving answers with page-level citations.
 The project is being built gradually so that every stage can be understood and
 tested before the next feature is added.
 
+Version 3 is feature-complete on the `version-3` branch. It adds benchmarked
+hybrid retrieval, focused context, deterministic reranking, and automated
+quality gates. See [`RELEASE_NOTES_V3.md`](RELEASE_NOTES_V3.md) for the final
+architecture, measurements, verification, and known limitations.
+
 ## Current features
 
 - Upload and search one or more text-based PDFs through a Streamlit interface
@@ -468,4 +473,4 @@ complex tables, so OCR-labelled evidence should be checked against the source.
 The current pipeline runs locally and uses free, open-source software. Uploaded
 PDFs, the local ChromaDB index, and the downloaded model are excluded from Git.
 A hosted model API or paid cloud deployment may be added later, but neither is
-required for Version 2.
+required for Version 3.
