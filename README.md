@@ -339,6 +339,23 @@ improved MRR from 0.871 to 0.879. Mean retrieval time increased from about
 Detailed committed results are in
 `evaluation/retrieval_v3_reranked_results.json`.
 
+### Optional cross-encoder experiment
+
+Version 4 includes an offline-by-default learned reranker experiment using
+`cross-encoder/ms-marco-MiniLM-L6-v2`. Downloading is always explicit:
+
+```powershell
+uv run python evaluate_retrieval.py --retriever cross-encoder --allow-model-download
+uv run python compare_rerankers.py
+```
+
+On the committed 20-case benchmark, both the deterministic and learned
+rerankers achieved 100% Recall@5 and MRR 1.000. The cross-encoder added no
+quality improvement, increased mean latency from 262.9 ms to 773.8 ms (2.94×),
+and used 91,815,798 bytes of model cache. The production app therefore retains
+the deterministic reranker. See
+[`docs/CROSS_ENCODER_EXPERIMENT.md`](docs/CROSS_ENCODER_EXPERIMENT.md).
+
 ### Automated retrieval quality gates
 
 Run the committed quality policy against the reranker report with:
@@ -498,7 +515,7 @@ scope and acceptance criteria are in
 - [x] Rewrite follow-up questions into standalone retrieval queries
 - [x] Stream local Ollama answers with cancellation and failure handling
 - [x] Add claim-level citations and calibrated answer confidence
-- [ ] Benchmark an optional local cross-encoder reranker
+- [x] Benchmark an optional local cross-encoder reranker
 - [ ] Add a JSON conversational benchmark and CI quality gates
 
 ## Limitations

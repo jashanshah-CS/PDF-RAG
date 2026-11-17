@@ -44,7 +44,7 @@ retrieval quality established in Versions 1–3.
    - Show calibrated supported, uncertain, or unsupported states without
      presenting a raw similarity score as probability.
 
-6. **Optional learned reranker experiment**
+6. **Optional learned reranker experiment** — completed; deterministic retained
    - Benchmark a small local cross-encoder against the Version 3 deterministic
      reranker.
    - Adopt it only if quality improvement justifies model size and latency.

@@ -1,0 +1,17 @@
+{
+  "adopt_cross_encoder": false,
+  "decision": "retain-deterministic",
+  "deterministic_recall_at_k": 1.0,
+  "cross_encoder_recall_at_k": 1.0,
+  "deterministic_mrr": 1.0,
+  "cross_encoder_mrr": 1.0,
+  "mrr_gain": 0.0,
+  "deterministic_mean_latency_ms": 262.9,
+  "cross_encoder_mean_latency_ms": 773.781,
+  "latency_ratio": 2.9432521871434005,
+  "minimum_mrr_gain": 0.01,
+  "maximum_latency_ratio": 3.0,
+  "reasons": [
+    "MRR gain was below the minimum meaningful improvement"
+  ]
+}

@@ -6,6 +6,10 @@ from pathlib import Path
 
 from src.rag_project.bm25 import BM25Index
 from src.rag_project.chunker import chunk_documents
+from src.rag_project.cross_encoder_reranker import (
+    CrossEncoderRetriever,
+    load_cross_encoder,
+)
 from src.rag_project.embeddings import (
     EmbeddedChunk,
     embed_chunks,
@@ -51,11 +55,17 @@ def parse_args() -> argparse.Namespace:
             "hybrid",
             "hybrid-window",
             "reranked",
+            "cross-encoder",
         ),
         default="semantic",
         help="Retrieval implementation to benchmark (default: semantic)",
     )
     parser.add_argument("--top-k", type=int, default=5)
+    parser.add_argument(
+        "--allow-model-download",
+        action="store_true",
+        help="Allow the optional cross-encoder benchmark model to be downloaded",
+    )
     args = parser.parse_args()
     if args.top_k <= 0:
         parser.error("--top-k must be greater than zero")
@@ -89,12 +99,34 @@ def main() -> None:
         "hybrid",
         "hybrid-window",
         "reranked",
+        "cross-encoder",
     }:
         # The baseline must be reproducible and must not change because a remote
         # model repository happened to be available during one run.
         model = load_embedding_model(local_only=True)
         embedded_chunks = embed_chunks(chunks, model)
-        if args.retriever == "reranked":
+        if args.retriever == "cross-encoder":
+            try:
+                cross_encoder = load_cross_encoder(
+                    local_only=not args.allow_model_download
+                )
+            except Exception as error:
+                raise SystemExit(
+                    "Cross-encoder model unavailable. Run once with "
+                    "--allow-model-download, or use --retriever reranked. "
+                    f"Details: {error}"
+                ) from error
+            learned_retriever = CrossEncoderRetriever(
+                embedded_chunks,
+                model,
+                cross_encoder,
+                fallback_on_error=False,
+            )
+            retriever_config = learned_retriever.configuration
+            search = lambda question: learned_retriever.search(
+                question, top_k=args.top_k
+            )
+        elif args.retriever == "reranked":
             reranked_retriever = RerankedRetriever(embedded_chunks, model)
             retriever_config = reranked_retriever.configuration
             search = lambda question: reranked_retriever.search(
@@ -159,6 +191,7 @@ def main() -> None:
             "hybrid": "evaluation/retrieval_v3_hybrid_results.json",
             "hybrid-window": "evaluation/retrieval_v3_sentence_window_results.json",
             "reranked": "evaluation/retrieval_v3_reranked_results.json",
+            "cross-encoder": "evaluation/retrieval_v4_cross_encoder_results.json",
         }[args.retriever]
     )
     write_report(output_path, report)

@@ -1,0 +1,1383 @@
+{
+  "schema_version": 1,
+  "benchmark": "version-3-retrieval-baseline",
+  "top_k": 5,
+  "corpus": [
+    "aurora_remote_work_policy.pdf",
+    "bluebird_customer_support_handbook.pdf",
+    "coral_procurement_rules.pdf",
+    "delta_data_retention_schedule.pdf",
+    "ember_training_catalogue.pdf",
+    "falcon_business_continuity_plan.pdf",
+    "greenwood_sustainability_plan.pdf",
+    "harbour_expenses_guide.pdf",
+    "indigo_product_release_process.pdf",
+    "juniper_visitor_safety_guide.pdf",
+    "atlas_travel_policy.pdf",
+    "beacon_security_standard.pdf",
+    "cedar_benefits_guide.pdf",
+    "project_orion_brief.pdf",
+    "scanned_ocr_test.pdf",
+    "summit_office_manual.pdf"
+  ],
+  "summary": {
+    "case_count": 20,
+    "supported_case_count": 18,
+    "unsupported_case_count": 2,
+    "recall_at_5": 1.0,
+    "mean_reciprocal_rank": 1.0,
+    "source_accuracy_at_5": 1,
+    "location_accuracy_at_5": 1,
+    "multi_source_coverage_at_5": 1,
+    "latency_ms": {
+      "mean": 262.9,
+      "median": 264.481,
+      "p95": 318.648,
+      "max": 338.197
+    },
+    "unsupported_top_score_mean": 0.944444,
+    "context": {
+      "mean_result_characters": 503.0,
+      "mean_original_characters": 644.3,
+      "reduction_percent": 21.9
+    }
+  },
+  "results": [
+    {
+      "case_id": "semantic-01",
+      "category": "semantic",
+      "question": "Can an Aurora employee do their job from another country, and for how long?",
+      "supported": true,
+      "expected_count": 1,
+      "matched_count": 1,
+      "source_recall": 1,
+      "location_recall": 1,
+      "evidence_recall": 1.0,
+      "reciprocal_rank": 1.0,
+      "latency_ms": 264.826,
+      "top_score": 1.0,
+      "retrieved": [
+        {
+          "rank": 1,
+          "source": "aurora_remote_work_policy.pdf",
+          "page": 1,
+          "url": null,
+          "score": 1.0,
+          "text_characters": 341,
+          "original_text_characters": 702,
+          "text_preview": "A department head may approve a temporary exception for up to six weeks. Equipment Aurora provides one laptop, one monitor, and a GBP 240 home-office allowance every two years. Working abroad Working outside the United Kingdom is limited to"
+        },
+        {
+          "rank": 2,
+          "source": "indigo_product_release_process.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.814286,
+          "text_characters": 293,
+          "original_text_characters": 557,
+          "text_preview": "Release controls Code freeze The standard production code freeze begins at 17:00 every Thursday. Approval A production release requires approval from Quality Assurance and the service owner. Rollback Every release must include a tested roll"
+        },
+        {
+          "rank": 3,
+          "source": "ember_training_catalogue.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.736111,
+          "text_characters": 632,
+          "original_text_characters": 632,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Ember Training Catalogue Professional development programme This document is fictional and exists only to test retrieval, grounded answers, source separation, c"
+        },
+        {
+          "rank": 4,
+          "source": "cedar_benefits_guide.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.698413,
+          "text_characters": 647,
+          "original_text_characters": 712,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Cedar Employee Benefits Guide Benefits year 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation, citations, a"
+        },
+        {
+          "rank": 5,
+          "source": "harbour_expenses_guide.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.625,
+          "text_characters": 596,
+          "original_text_characters": 596,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Harbour Expenses Guide Employee reimbursement rules This document is fictional and exists only to test retrieval, grounded answers, source separation, citations"
+        }
+      ]
+    },
+    {
+      "case_id": "semantic-02",
+      "category": "semantic",
+      "question": "How quickly must the most serious Bluebird support incident be acknowledged?",
+      "supported": true,
+      "expected_count": 1,
+      "matched_count": 1,
+      "source_recall": 1,
+      "location_recall": 1,
+      "evidence_recall": 1.0,
+      "reciprocal_rank": 1.0,
+      "latency_ms": 220.0,
+      "top_score": 1.0,
+      "retrieved": [
+        {
+          "rank": 1,
+          "source": "bluebird_customer_support_handbook.pdf",
+          "page": 1,
+          "url": null,
+          "score": 1.0,
+          "text_characters": 645,
+          "original_text_characters": 645,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Bluebird Customer Support Handbook Service standards for 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation,"
+        },
+        {
+          "rank": 2,
+          "source": "beacon_security_standard.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.857143,
+          "text_characters": 525,
+          "original_text_characters": 634,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 2 Incidents and records Incident reporting A suspected security incident must be reported to the Security Desk within 20 minutes of discovery. Staff must preserve"
+        },
+        {
+          "rank": 3,
+          "source": "cedar_benefits_guide.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.708333,
+          "text_characters": 259,
+          "original_text_characters": 712,
+          "text_preview": "Volunteer leave Every employee may take two paid volunteer days per calendar year for work with a registered charity. Family support Primary carers receive 20 weeks of fully paid parental leave. Secondary carers receive six weeks of fully p"
+        },
+        {
+          "rank": 4,
+          "source": "delta_data_retention_schedule.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.675,
+          "text_characters": 604,
+          "original_text_characters": 604,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Delta Data Retention Schedule Approved corporate retention periods This document is fictional and exists only to test retrieval, grounded answers, source separa"
+        },
+        {
+          "rank": 5,
+          "source": "ember_training_catalogue.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.633333,
+          "text_characters": 632,
+          "original_text_characters": 632,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Ember Training Catalogue Professional development programme This document is fictional and exists only to test retrieval, grounded answers, source separation, c"
+        }
+      ]
+    },
+    {
+      "case_id": "semantic-03",
+      "category": "semantic",
+      "question": "How long should Delta keep signed customer agreements after they finish?",
+      "supported": true,
+      "expected_count": 1,
+      "matched_count": 1,
+      "source_recall": 1,
+      "location_recall": 1,
+      "evidence_recall": 1.0,
+      "reciprocal_rank": 1.0,
+      "latency_ms": 241.771,
+      "top_score": 1.0,
+      "retrieved": [
+        {
+          "rank": 1,
+          "source": "delta_data_retention_schedule.pdf",
+          "page": 1,
+          "url": null,
+          "score": 1.0,
+          "text_characters": 604,
+          "original_text_characters": 604,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Delta Data Retention Schedule Approved corporate retention periods This document is fictional and exists only to test retrieval, grounded answers, source separa"
+        },
+        {
+          "rank": 2,
+          "source": "atlas_travel_policy.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.814286,
+          "text_characters": 329,
+          "original_text_characters": 681,
+          "text_preview": "Alcohol is not reimbursable unless it was part of a pre-approved client event. Claim deadline Expense claims and itemised receipts must be submitted within 21 calendar days of the purchase. Late claims require a written explanation and Fina"
+        },
+        {
+          "rank": 3,
+          "source": "falcon_business_continuity_plan.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.740079,
+          "text_characters": 326,
+          "original_text_characters": 588,
+          "text_preview": "Recovery priorities Payments service The payments service has a recovery time objective of two hours and a recovery point objective of 15 minutes. Customer portal The customer portal has a recovery time objective of six hours. Coordination "
+        },
+        {
+          "rank": 4,
+          "source": "bluebird_customer_support_handbook.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.708333,
+          "text_characters": 645,
+          "original_text_characters": 645,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Bluebird Customer Support Handbook Service standards for 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation,"
+        },
+        {
+          "rank": 5,
+          "source": "project_orion_brief.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.611111,
+          "text_characters": 519,
+          "original_text_characters": 615,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 2 Measures and delivery risks Success measures The programme aims to reduce stockout events by 12 percent and achieve at least 92 percent weekly demand-forecast a"
+        }
+      ]
+    },
+    {
+      "case_id": "semantic-04",
+      "category": "semantic",
+      "question": "Which Ember learning option can every permanent member of staff attend?",
+      "supported": true,
+      "expected_count": 1,
+      "matched_count": 1,
+      "source_recall": 1,
+      "location_recall": 1,
+      "evidence_recall": 1.0,
+      "reciprocal_rank": 1.0,
+      "latency_ms": 279.574,
+      "top_score": 1.0,
+      "retrieved": [
+        {
+          "rank": 1,
+          "source": "ember_training_catalogue.pdf",
+          "page": 1,
+          "url": null,
+          "score": 1.0,
+          "text_characters": 632,
+          "original_text_characters": 632,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Ember Training Catalogue Professional development programme This document is fictional and exists only to test retrieval, grounded answers, source separation, c"
+        },
+        {
+          "rank": 2,
+          "source": "cedar_benefits_guide.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.821429,
+          "text_characters": 506,
+          "original_text_characters": 576,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 2 Allowances and pension Learning allowance Employees receive a GBP 1,500 learning allowance per calendar year after completing probation. The allowance cannot be"
+        },
+        {
+          "rank": 3,
+          "source": "indigo_product_release_process.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.760714,
+          "text_characters": 557,
+          "original_text_characters": 557,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Indigo Product Release Process Production change governance This document is fictional and exists only to test retrieval, grounded answers, source separation, c"
+        },
+        {
+          "rank": 4,
+          "source": "atlas_travel_policy.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.658333,
+          "text_characters": 519,
+          "original_text_characters": 904,
+          "text_preview": "Booking and approval Approved booking channel All rail, hotel, and air travel must be booked through Atlas Travel. Employees may book directly only when Atlas Travel confirms in writing that it cannot provide a suitable option. Approval thr"
+        },
+        {
+          "rank": 5,
+          "source": "beacon_security_standard.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.633333,
+          "text_characters": 559,
+          "original_text_characters": 634,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 2 Incidents and records Incident reporting A suspected security incident must be reported to the Security Desk within 20 minutes of discovery. Staff must preserve"
+        }
+      ]
+    },
+    {
+      "case_id": "semantic-05",
+      "category": "semantic",
+      "question": "Where should Juniper guests gather if the building is evacuated?",
+      "supported": true,
+      "expected_count": 1,
+      "matched_count": 1,
+      "source_recall": 1,
+      "location_recall": 1,
+      "evidence_recall": 1.0,
+      "reciprocal_rank": 1.0,
+      "latency_ms": 268.188,
+      "top_score": 1.0,
+      "retrieved": [
+        {
+          "rank": 1,
+          "source": "juniper_visitor_safety_guide.pdf",
+          "page": 1,
+          "url": null,
+          "score": 1.0,
+          "text_characters": 586,
+          "original_text_characters": 586,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Juniper Visitor Safety Guide Rules for guests and contractors This document is fictional and exists only to test retrieval, grounded answers, source separation,"
+        },
+        {
+          "rank": 2,
+          "source": "summit_office_manual.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.821429,
+          "text_characters": 422,
+          "original_text_characters": 606,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 2 Safety and facilities Evacuation The primary assembly point is Riverside Square. If Riverside Square is unavailable, staff must use the secondary assembly point"
+        },
+        {
+          "rank": 3,
+          "source": "atlas_travel_policy.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.760714,
+          "text_characters": 288,
+          "original_text_characters": 681,
+          "text_preview": "Late claims require a written explanation and Finance Operations approval. Ground transport Public transport should be used when practical. A taxi may be claimed after 21:30, when carrying heavy company equipment, or when a documented acces"
+        },
+        {
+          "rank": 4,
+          "source": "summit_office_manual.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.458333,
+          "text_characters": 449,
+          "original_text_characters": 706,
+          "text_preview": "Access and workplace use Opening hours Standard office access is available from 07:00 to 20:00 on working days. Weekend access requires Facilities approval at least two working days in advance. Desk booking Employees must reserve a desk by "
+        },
+        {
+          "rank": 5,
+          "source": "falcon_business_continuity_plan.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.411111,
+          "text_characters": 326,
+          "original_text_characters": 588,
+          "text_preview": "Recovery priorities Payments service The payments service has a recovery time objective of two hours and a recovery point objective of 15 minutes. Customer portal The customer portal has a recovery time objective of six hours. Coordination "
+        }
+      ]
+    },
+    {
+      "case_id": "exact-01",
+      "category": "exact",
+      "question": "What does Coral require for a purchase above GBP 5,000?",
+      "supported": true,
+      "expected_count": 1,
+      "matched_count": 1,
+      "source_recall": 1,
+      "location_recall": 1,
+      "evidence_recall": 1.0,
+      "reciprocal_rank": 1.0,
+      "latency_ms": 290.933,
+      "top_score": 1.0,
+      "retrieved": [
+        {
+          "rank": 1,
+          "source": "coral_procurement_rules.pdf",
+          "page": 1,
+          "url": null,
+          "score": 1.0,
+          "text_characters": 594,
+          "original_text_characters": 594,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Coral Procurement Rules Purchasing controls This document is fictional and exists only to test retrieval, grounded answers, source separation, citations, and re"
+        },
+        {
+          "rank": 2,
+          "source": "atlas_travel_policy.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.825397,
+          "text_characters": 532,
+          "original_text_characters": 681,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 2 Expenses and deadlines Meal limits The daily meal limit is GBP 32 for domestic travel and GBP 48 for international travel. Alcohol is not reimbursable unless it"
+        },
+        {
+          "rank": 3,
+          "source": "cedar_benefits_guide.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.75,
+          "text_characters": 506,
+          "original_text_characters": 576,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 2 Allowances and pension Learning allowance Employees receive a GBP 1,500 learning allowance per calendar year after completing probation. The allowance cannot be"
+        },
+        {
+          "rank": 4,
+          "source": "harbour_expenses_guide.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.665079,
+          "text_characters": 596,
+          "original_text_characters": 596,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Harbour Expenses Guide Employee reimbursement rules This document is fictional and exists only to test retrieval, grounded answers, source separation, citations"
+        },
+        {
+          "rank": 5,
+          "source": "scanned_ocr_test.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.633333,
+          "text_characters": 282,
+          "original_text_characters": 282,
+          "text_preview": "SCANNED OCR TEST Northwind Equipment Receipt Receipt number: NW-2048 Purchase date: 6 October 2026 Item: Portable document scanner Department: Research Operations Total paid: GBP 347.50 Approval code: RAVEN-82 This page contains image pixel"
+        }
+      ]
+    },
+    {
+      "case_id": "exact-02",
+      "category": "exact",
+      "question": "Which service has an RPO of 15 minutes?",
+      "supported": true,
+      "expected_count": 1,
+      "matched_count": 1,
+      "source_recall": 1,
+      "location_recall": 1,
+      "evidence_recall": 1.0,
+      "reciprocal_rank": 1.0,
+      "latency_ms": 161.584,
+      "top_score": 1.0,
+      "retrieved": [
+        {
+          "rank": 1,
+          "source": "falcon_business_continuity_plan.pdf",
+          "page": 1,
+          "url": null,
+          "score": 1.0,
+          "text_characters": 488,
+          "original_text_characters": 588,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Falcon Business Continuity Plan Critical service recovery This document is fictional and exists only to test retrieval, grounded answers, source separation, cit"
+        },
+        {
+          "rank": 2,
+          "source": "bluebird_customer_support_handbook.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.857143,
+          "text_characters": 542,
+          "original_text_characters": 645,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Bluebird Customer Support Handbook Service standards for 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation,"
+        },
+        {
+          "rank": 3,
+          "source": "aurora_remote_work_policy.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.722222,
+          "text_characters": 702,
+          "original_text_characters": 702,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Aurora Remote Work Policy Effective March 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation, citations, and"
+        },
+        {
+          "rank": 4,
+          "source": "indigo_product_release_process.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.694444,
+          "text_characters": 293,
+          "original_text_characters": 557,
+          "text_preview": "Release controls Code freeze The standard production code freeze begins at 17:00 every Thursday. Approval A production release requires approval from Quality Assurance and the service owner. Rollback Every release must include a tested roll"
+        },
+        {
+          "rank": 5,
+          "source": "project_orion_brief.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.6,
+          "text_characters": 613,
+          "original_text_characters": 704,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Project Orion Delivery Brief Inventory forecasting programme This document is fictional and exists only to test retrieval, grounded answers, source separation, "
+        }
+      ]
+    },
+    {
+      "case_id": "exact-03",
+      "category": "exact",
+      "question": "Which policy states 17:00 every Thursday?",
+      "supported": true,
+      "expected_count": 1,
+      "matched_count": 1,
+      "source_recall": 1,
+      "location_recall": 1,
+      "evidence_recall": 1.0,
+      "reciprocal_rank": 1.0,
+      "latency_ms": 286.049,
+      "top_score": 0.933333,
+      "retrieved": [
+        {
+          "rank": 1,
+          "source": "indigo_product_release_process.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.933333,
+          "text_characters": 557,
+          "original_text_characters": 557,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Indigo Product Release Process Production change governance This document is fictional and exists only to test retrieval, grounded answers, source separation, c"
+        },
+        {
+          "rank": 2,
+          "source": "aurora_remote_work_policy.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.839286,
+          "text_characters": 537,
+          "original_text_characters": 702,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Aurora Remote Work Policy Effective March 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation, citations, and"
+        },
+        {
+          "rank": 3,
+          "source": "summit_office_manual.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.767857,
+          "text_characters": 331,
+          "original_text_characters": 706,
+          "text_preview": "Access and workplace use Opening hours Standard office access is available from 07:00 to 20:00 on working days. Weekend access requires Facilities approval at least two working days in advance. Desk booking Employees must reserve a desk by "
+        },
+        {
+          "rank": 4,
+          "source": "atlas_travel_policy.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.7,
+          "text_characters": 499,
+          "original_text_characters": 681,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 2 Expenses and deadlines Meal limits The daily meal limit is GBP 32 for domestic travel and GBP 48 for international travel. Alcohol is not reimbursable unless it"
+        },
+        {
+          "rank": 5,
+          "source": "atlas_travel_policy.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.633333,
+          "text_characters": 480,
+          "original_text_characters": 904,
+          "text_preview": "Employees may book directly only when Atlas Travel confirms in writing that it cannot provide a suitable option. Approval threshold A line manager must approve every overnight trip. Any single booking expected to cost more than GBP 750 also"
+        }
+      ]
+    },
+    {
+      "case_id": "exact-04",
+      "category": "exact",
+      "question": "What is Greenwood's 46 percent target measured from the 2022 baseline?",
+      "supported": true,
+      "expected_count": 1,
+      "matched_count": 1,
+      "source_recall": 1,
+      "location_recall": 1,
+      "evidence_recall": 1.0,
+      "reciprocal_rank": 1.0,
+      "latency_ms": 266.186,
+      "top_score": 1.0,
+      "retrieved": [
+        {
+          "rank": 1,
+          "source": "greenwood_sustainability_plan.pdf",
+          "page": 1,
+          "url": null,
+          "score": 1.0,
+          "text_characters": 514,
+          "original_text_characters": 614,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Greenwood Sustainability Plan Environmental targets to 2030 This document is fictional and exists only to test retrieval, grounded answers, source separation, c"
+        },
+        {
+          "rank": 2,
+          "source": "summit_office_manual.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.825397,
+          "text_characters": 453,
+          "original_text_characters": 606,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 2 Safety and facilities Evacuation The primary assembly point is Riverside Square. If Riverside Square is unavailable, staff must use the secondary assembly point"
+        },
+        {
+          "rank": 3,
+          "source": "project_orion_brief.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.767857,
+          "text_characters": 519,
+          "original_text_characters": 615,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 2 Measures and delivery risks Success measures The programme aims to reduce stockout events by 12 percent and achieve at least 92 percent weekly demand-forecast a"
+        },
+        {
+          "rank": 4,
+          "source": "cedar_benefits_guide.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.655556,
+          "text_characters": 576,
+          "original_text_characters": 576,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 2 Allowances and pension Learning allowance Employees receive a GBP 1,500 learning allowance per calendar year after completing probation. The allowance cannot be"
+        },
+        {
+          "rank": 5,
+          "source": "project_orion_brief.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.625,
+          "text_characters": 569,
+          "original_text_characters": 704,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Project Orion Delivery Brief Inventory forecasting programme This document is fictional and exists only to test retrieval, grounded answers, source separation, "
+        }
+      ]
+    },
+    {
+      "case_id": "exact-05",
+      "category": "exact",
+      "question": "When does Harbour pay 45 pence per mile for the first 10,000 miles?",
+      "supported": true,
+      "expected_count": 1,
+      "matched_count": 1,
+      "source_recall": 1,
+      "location_recall": 1,
+      "evidence_recall": 1.0,
+      "reciprocal_rank": 1.0,
+      "latency_ms": 231.579,
+      "top_score": 1.0,
+      "retrieved": [
+        {
+          "rank": 1,
+          "source": "harbour_expenses_guide.pdf",
+          "page": 1,
+          "url": null,
+          "score": 1.0,
+          "text_characters": 596,
+          "original_text_characters": 596,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Harbour Expenses Guide Employee reimbursement rules This document is fictional and exists only to test retrieval, grounded answers, source separation, citations"
+        },
+        {
+          "rank": 2,
+          "source": "cedar_benefits_guide.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.825397,
+          "text_characters": 576,
+          "original_text_characters": 576,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 2 Allowances and pension Learning allowance Employees receive a GBP 1,500 learning allowance per calendar year after completing probation. The allowance cannot be"
+        },
+        {
+          "rank": 3,
+          "source": "coral_procurement_rules.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.75,
+          "text_characters": 594,
+          "original_text_characters": 594,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Coral Procurement Rules Purchasing controls This document is fictional and exists only to test retrieval, grounded answers, source separation, citations, and re"
+        },
+        {
+          "rank": 4,
+          "source": "project_orion_brief.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.67619,
+          "text_characters": 519,
+          "original_text_characters": 615,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 2 Measures and delivery risks Success measures The programme aims to reduce stockout events by 12 percent and achieve at least 92 percent weekly demand-forecast a"
+        },
+        {
+          "rank": 5,
+          "source": "bluebird_customer_support_handbook.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.622222,
+          "text_characters": 645,
+          "original_text_characters": 645,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Bluebird Customer Support Handbook Service standards for 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation,"
+        }
+      ]
+    },
+    {
+      "case_id": "context-01",
+      "category": "context",
+      "question": "Who can approve a temporary exception to Aurora office attendance and how long can it last?",
+      "supported": true,
+      "expected_count": 1,
+      "matched_count": 1,
+      "source_recall": 1,
+      "location_recall": 1,
+      "evidence_recall": 1.0,
+      "reciprocal_rank": 1.0,
+      "latency_ms": 317.874,
+      "top_score": 1.0,
+      "retrieved": [
+        {
+          "rank": 1,
+          "source": "aurora_remote_work_policy.pdf",
+          "page": 1,
+          "url": null,
+          "score": 1.0,
+          "text_characters": 537,
+          "original_text_characters": 702,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Aurora Remote Work Policy Effective March 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation, citations, and"
+        },
+        {
+          "rank": 2,
+          "source": "summit_office_manual.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.825397,
+          "text_characters": 340,
+          "original_text_characters": 606,
+          "text_preview": "Emergency drills Each office conducts an evacuation drill every quarter. Fire wardens record attendance and submit the drill report within two working days. Facilities requests Urgent heating, water, power, or access-control faults have a t"
+        },
+        {
+          "rank": 3,
+          "source": "atlas_travel_policy.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.722222,
+          "text_characters": 480,
+          "original_text_characters": 904,
+          "text_preview": "Employees may book directly only when Atlas Travel confirms in writing that it cannot provide a suitable option. Approval threshold A line manager must approve every overnight trip. Any single booking expected to cost more than GBP 750 also"
+        },
+        {
+          "rank": 4,
+          "source": "summit_office_manual.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.67619,
+          "text_characters": 331,
+          "original_text_characters": 706,
+          "text_preview": "Access and workplace use Opening hours Standard office access is available from 07:00 to 20:00 on working days. Weekend access requires Facilities approval at least two working days in advance. Desk booking Employees must reserve a desk by "
+        },
+        {
+          "rank": 5,
+          "source": "indigo_product_release_process.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.65,
+          "text_characters": 293,
+          "original_text_characters": 557,
+          "text_preview": "Release controls Code freeze The standard production code freeze begins at 17:00 every Thursday. Approval A production release requires approval from Quality Assurance and the service owner. Rollback Every release must include a tested roll"
+        }
+      ]
+    },
+    {
+      "case_id": "context-02",
+      "category": "context",
+      "question": "What happens when a priority-one Bluebird incident is still unresolved after 45 minutes?",
+      "supported": true,
+      "expected_count": 1,
+      "matched_count": 1,
+      "source_recall": 1,
+      "location_recall": 1,
+      "evidence_recall": 1.0,
+      "reciprocal_rank": 1.0,
+      "latency_ms": 238.233,
+      "top_score": 1.0,
+      "retrieved": [
+        {
+          "rank": 1,
+          "source": "bluebird_customer_support_handbook.pdf",
+          "page": 1,
+          "url": null,
+          "score": 1.0,
+          "text_characters": 645,
+          "original_text_characters": 645,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Bluebird Customer Support Handbook Service standards for 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation,"
+        },
+        {
+          "rank": 2,
+          "source": "falcon_business_continuity_plan.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.857143,
+          "text_characters": 588,
+          "original_text_characters": 588,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Falcon Business Continuity Plan Critical service recovery This document is fictional and exists only to test retrieval, grounded answers, source separation, cit"
+        },
+        {
+          "rank": 3,
+          "source": "beacon_security_standard.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.75,
+          "text_characters": 525,
+          "original_text_characters": 634,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 2 Incidents and records Incident reporting A suspected security incident must be reported to the Security Desk within 20 minutes of discovery. Staff must preserve"
+        },
+        {
+          "rank": 4,
+          "source": "delta_data_retention_schedule.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.666667,
+          "text_characters": 604,
+          "original_text_characters": 604,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Delta Data Retention Schedule Approved corporate retention periods This document is fictional and exists only to test retrieval, grounded answers, source separa"
+        },
+        {
+          "rank": 5,
+          "source": "harbour_expenses_guide.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.6,
+          "text_characters": 596,
+          "original_text_characters": 596,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Harbour Expenses Guide Employee reimbursement rules This document is fictional and exists only to test retrieval, grounded answers, source separation, citations"
+        }
+      ]
+    },
+    {
+      "case_id": "context-03",
+      "category": "context",
+      "question": "What experience is required before taking Ember's Leadership Essentials course?",
+      "supported": true,
+      "expected_count": 1,
+      "matched_count": 1,
+      "source_recall": 1,
+      "location_recall": 1,
+      "evidence_recall": 1.0,
+      "reciprocal_rank": 1.0,
+      "latency_ms": 318.648,
+      "top_score": 1.0,
+      "retrieved": [
+        {
+          "rank": 1,
+          "source": "ember_training_catalogue.pdf",
+          "page": 1,
+          "url": null,
+          "score": 1.0,
+          "text_characters": 632,
+          "original_text_characters": 632,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Ember Training Catalogue Professional development programme This document is fictional and exists only to test retrieval, grounded answers, source separation, c"
+        },
+        {
+          "rank": 2,
+          "source": "beacon_security_standard.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.825397,
+          "text_characters": 598,
+          "original_text_characters": 854,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Beacon Information Security Standard Mandatory controls for all staff This document is fictional and exists only to test retrieval, grounded answers, source sep"
+        },
+        {
+          "rank": 3,
+          "source": "atlas_travel_policy.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.72619,
+          "text_characters": 346,
+          "original_text_characters": 904,
+          "text_preview": "Any single booking expected to cost more than GBP 750 also requires approval from the Finance Operations Lead before purchase. Travel class Rail journeys must use standard class. Flights under eight hours must use economy. Premium economy i"
+        },
+        {
+          "rank": 4,
+          "source": "aurora_remote_work_policy.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.7,
+          "text_characters": 702,
+          "original_text_characters": 702,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Aurora Remote Work Policy Effective March 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation, citations, and"
+        },
+        {
+          "rank": 5,
+          "source": "coral_procurement_rules.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.622222,
+          "text_characters": 594,
+          "original_text_characters": 594,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Coral Procurement Rules Purchasing controls This document is fictional and exists only to test retrieval, grounded answers, source separation, citations, and re"
+        }
+      ]
+    },
+    {
+      "case_id": "context-04",
+      "category": "context",
+      "question": "Whose approval is needed before an Indigo production release?",
+      "supported": true,
+      "expected_count": 1,
+      "matched_count": 1,
+      "source_recall": 1,
+      "location_recall": 1,
+      "evidence_recall": 1.0,
+      "reciprocal_rank": 1.0,
+      "latency_ms": 249.646,
+      "top_score": 1.0,
+      "retrieved": [
+        {
+          "rank": 1,
+          "source": "indigo_product_release_process.pdf",
+          "page": 1,
+          "url": null,
+          "score": 1.0,
+          "text_characters": 557,
+          "original_text_characters": 557,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Indigo Product Release Process Production change governance This document is fictional and exists only to test retrieval, grounded answers, source separation, c"
+        },
+        {
+          "rank": 2,
+          "source": "coral_procurement_rules.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.821429,
+          "text_characters": 594,
+          "original_text_characters": 594,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Coral Procurement Rules Purchasing controls This document is fictional and exists only to test retrieval, grounded answers, source separation, citations, and re"
+        },
+        {
+          "rank": 3,
+          "source": "atlas_travel_policy.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.760714,
+          "text_characters": 360,
+          "original_text_characters": 904,
+          "text_preview": "Employees may book directly only when Atlas Travel confirms in writing that it cannot provide a suitable option. Approval threshold A line manager must approve every overnight trip. Any single booking expected to cost more than GBP 750 also"
+        },
+        {
+          "rank": 4,
+          "source": "project_orion_brief.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.647222,
+          "text_characters": 282,
+          "original_text_characters": 704,
+          "text_preview": "Ownership Maya Chen is the executive sponsor. Ruben Patel is the delivery manager, and the Data Platform team owns the production service. Budget The approved programme budget is GBP 680,000. Any forecast overrun greater than 8 percent must"
+        },
+        {
+          "rank": 5,
+          "source": "aurora_remote_work_policy.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.444444,
+          "text_characters": 537,
+          "original_text_characters": 702,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Aurora Remote Work Policy Effective March 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation, citations, and"
+        }
+      ]
+    },
+    {
+      "case_id": "multi-01",
+      "category": "multi_source",
+      "question": "Compare Aurora's home-office allowance with Harbour's monthly home internet support.",
+      "supported": true,
+      "expected_count": 2,
+      "matched_count": 2,
+      "source_recall": 1,
+      "location_recall": 1,
+      "evidence_recall": 1.0,
+      "reciprocal_rank": 1.0,
+      "latency_ms": 264.135,
+      "top_score": 0.97619,
+      "retrieved": [
+        {
+          "rank": 1,
+          "source": "harbour_expenses_guide.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.97619,
+          "text_characters": 596,
+          "original_text_characters": 596,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Harbour Expenses Guide Employee reimbursement rules This document is fictional and exists only to test retrieval, grounded answers, source separation, citations"
+        },
+        {
+          "rank": 2,
+          "source": "aurora_remote_work_policy.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.880952,
+          "text_characters": 702,
+          "original_text_characters": 702,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Aurora Remote Work Policy Effective March 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation, citations, and"
+        },
+        {
+          "rank": 3,
+          "source": "cedar_benefits_guide.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.686111,
+          "text_characters": 506,
+          "original_text_characters": 576,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 2 Allowances and pension Learning allowance Employees receive a GBP 1,500 learning allowance per calendar year after completing probation. The allowance cannot be"
+        },
+        {
+          "rank": 4,
+          "source": "summit_office_manual.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.680556,
+          "text_characters": 531,
+          "original_text_characters": 706,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Summit Office Operations Manual Workplace procedures This document is fictional and exists only to test retrieval, grounded answers, source separation, citation"
+        },
+        {
+          "rank": 5,
+          "source": "bluebird_customer_support_handbook.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.65,
+          "text_characters": 542,
+          "original_text_characters": 645,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Bluebird Customer Support Handbook Service standards for 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation,"
+        }
+      ]
+    },
+    {
+      "case_id": "multi-02",
+      "category": "multi_source",
+      "question": "Compare Harbour's expense claim deadline with Delta's deletion period for unsuccessful applicants.",
+      "supported": true,
+      "expected_count": 2,
+      "matched_count": 2,
+      "source_recall": 1,
+      "location_recall": 1,
+      "evidence_recall": 1.0,
+      "reciprocal_rank": 1.0,
+      "latency_ms": 255.342,
+      "top_score": 0.928571,
+      "retrieved": [
+        {
+          "rank": 1,
+          "source": "delta_data_retention_schedule.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.928571,
+          "text_characters": 604,
+          "original_text_characters": 604,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Delta Data Retention Schedule Approved corporate retention periods This document is fictional and exists only to test retrieval, grounded answers, source separa"
+        },
+        {
+          "rank": 2,
+          "source": "harbour_expenses_guide.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.928571,
+          "text_characters": 596,
+          "original_text_characters": 596,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Harbour Expenses Guide Employee reimbursement rules This document is fictional and exists only to test retrieval, grounded answers, source separation, citations"
+        },
+        {
+          "rank": 3,
+          "source": "atlas_travel_policy.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.75,
+          "text_characters": 329,
+          "original_text_characters": 681,
+          "text_preview": "Alcohol is not reimbursable unless it was part of a pre-approved client event. Claim deadline Expense claims and itemised receipts must be submitted within 21 calendar days of the purchase. Late claims require a written explanation and Fina"
+        },
+        {
+          "rank": 4,
+          "source": "cedar_benefits_guide.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.433333,
+          "text_characters": 385,
+          "original_text_characters": 576,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 2 Allowances and pension Learning allowance Employees receive a GBP 1,500 learning allowance per calendar year after completing probation. The allowance cannot be"
+        },
+        {
+          "rank": 5,
+          "source": "aurora_remote_work_policy.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.411111,
+          "text_characters": 537,
+          "original_text_characters": 702,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Aurora Remote Work Policy Effective March 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation, citations, and"
+        }
+      ]
+    },
+    {
+      "case_id": "multi-03",
+      "category": "multi_source",
+      "question": "What does 15 minutes mean in the Bluebird and Falcon documents?",
+      "supported": true,
+      "expected_count": 2,
+      "matched_count": 2,
+      "source_recall": 1,
+      "location_recall": 1,
+      "evidence_recall": 1.0,
+      "reciprocal_rank": 1.0,
+      "latency_ms": 231.956,
+      "top_score": 0.952381,
+      "retrieved": [
+        {
+          "rank": 1,
+          "source": "bluebird_customer_support_handbook.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.952381,
+          "text_characters": 542,
+          "original_text_characters": 645,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Bluebird Customer Support Handbook Service standards for 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation,"
+        },
+        {
+          "rank": 2,
+          "source": "falcon_business_continuity_plan.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.904762,
+          "text_characters": 488,
+          "original_text_characters": 588,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Falcon Business Continuity Plan Critical service recovery This document is fictional and exists only to test retrieval, grounded answers, source separation, cit"
+        },
+        {
+          "rank": 3,
+          "source": "aurora_remote_work_policy.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.736111,
+          "text_characters": 633,
+          "original_text_characters": 702,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Aurora Remote Work Policy Effective March 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation, citations, and"
+        },
+        {
+          "rank": 4,
+          "source": "indigo_product_release_process.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.655556,
+          "text_characters": 557,
+          "original_text_characters": 557,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Indigo Product Release Process Production change governance This document is fictional and exists only to test retrieval, grounded answers, source separation, c"
+        },
+        {
+          "rank": 5,
+          "source": "beacon_security_standard.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.625,
+          "text_characters": 449,
+          "original_text_characters": 634,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 2 Incidents and records Incident reporting A suspected security incident must be reported to the Security Desk within 20 minutes of discovery. Staff must preserve"
+        }
+      ]
+    },
+    {
+      "case_id": "multi-04",
+      "category": "multi_source",
+      "question": "What Thursday requirements appear in the Aurora and Indigo policies?",
+      "supported": true,
+      "expected_count": 2,
+      "matched_count": 2,
+      "source_recall": 1,
+      "location_recall": 1,
+      "evidence_recall": 1.0,
+      "reciprocal_rank": 1.0,
+      "latency_ms": 292.646,
+      "top_score": 1.0,
+      "retrieved": [
+        {
+          "rank": 1,
+          "source": "aurora_remote_work_policy.pdf",
+          "page": 1,
+          "url": null,
+          "score": 1.0,
+          "text_characters": 702,
+          "original_text_characters": 702,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Aurora Remote Work Policy Effective March 2026 This document is fictional and exists only to test retrieval, grounded answers, source separation, citations, and"
+        },
+        {
+          "rank": 2,
+          "source": "indigo_product_release_process.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.825397,
+          "text_characters": 293,
+          "original_text_characters": 557,
+          "text_preview": "Release controls Code freeze The standard production code freeze begins at 17:00 every Thursday. Approval A production release requires approval from Quality Assurance and the service owner. Rollback Every release must include a tested roll"
+        },
+        {
+          "rank": 3,
+          "source": "atlas_travel_policy.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.740079,
+          "text_characters": 528,
+          "original_text_characters": 904,
+          "text_preview": "Employees may book directly only when Atlas Travel confirms in writing that it cannot provide a suitable option. Approval threshold A line manager must approve every overnight trip. Any single booking expected to cost more than GBP 750 also"
+        },
+        {
+          "rank": 4,
+          "source": "juniper_visitor_safety_guide.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.708333,
+          "text_characters": 473,
+          "original_text_characters": 586,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Juniper Visitor Safety Guide Rules for guests and contractors This document is fictional and exists only to test retrieval, grounded answers, source separation,"
+        },
+        {
+          "rank": 5,
+          "source": "coral_procurement_rules.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.6,
+          "text_characters": 594,
+          "original_text_characters": 594,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Coral Procurement Rules Purchasing controls This document is fictional and exists only to test retrieval, grounded answers, source separation, citations, and re"
+        }
+      ]
+    },
+    {
+      "case_id": "unsupported-01",
+      "category": "unsupported",
+      "question": "What food is served in the company cafeteria on Fridays?",
+      "supported": false,
+      "expected_count": 0,
+      "matched_count": 0,
+      "source_recall": null,
+      "location_recall": null,
+      "evidence_recall": null,
+      "reciprocal_rank": null,
+      "latency_ms": 338.197,
+      "top_score": 0.944444,
+      "retrieved": [
+        {
+          "rank": 1,
+          "source": "beacon_security_standard.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.944444,
+          "text_characters": 722,
+          "original_text_characters": 854,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Beacon Information Security Standard Mandatory controls for all staff This document is fictional and exists only to test retrieval, grounded answers, source sep"
+        },
+        {
+          "rank": 2,
+          "source": "cedar_benefits_guide.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.839286,
+          "text_characters": 359,
+          "original_text_characters": 576,
+          "text_preview": "The allowance cannot be exchanged for salary. Wellness allowance The company reimburses up to GBP 55 per month for eligible fitness, wellbeing, or mindfulness services. Pension contribution Cedar contributes 7 percent of pensionable salary "
+        },
+        {
+          "rank": 3,
+          "source": "greenwood_sustainability_plan.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.683333,
+          "text_characters": 350,
+          "original_text_characters": 614,
+          "text_preview": "Targets and reporting Carbon target Greenwood will reduce scope-one and scope-two emissions by 46 percent from the 2022 baseline by December 2030. Electricity All company-operated offices must use 100 percent renewable electricity by the en"
+        },
+        {
+          "rank": 4,
+          "source": "atlas_travel_policy.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.517857,
+          "text_characters": 392,
+          "original_text_characters": 681,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 2 Expenses and deadlines Meal limits The daily meal limit is GBP 32 for domestic travel and GBP 48 for international travel. Alcohol is not reimbursable unless it"
+        },
+        {
+          "rank": 5,
+          "source": "summit_office_manual.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.466667,
+          "text_characters": 331,
+          "original_text_characters": 706,
+          "text_preview": "Access and workplace use Opening hours Standard office access is available from 07:00 to 20:00 on working days. Weekend access requires Facilities approval at least two working days in advance. Desk booking Employees must reserve a desk by "
+        }
+      ]
+    },
+    {
+      "case_id": "unsupported-02",
+      "category": "unsupported",
+      "question": "What is the chief executive's date of birth?",
+      "supported": false,
+      "expected_count": 0,
+      "matched_count": 0,
+      "source_recall": null,
+      "location_recall": null,
+      "evidence_recall": null,
+      "reciprocal_rank": null,
+      "latency_ms": 240.633,
+      "top_score": 0.944444,
+      "retrieved": [
+        {
+          "rank": 1,
+          "source": "coral_procurement_rules.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.944444,
+          "text_characters": 594,
+          "original_text_characters": 594,
+          "text_preview": "VERSION 2 EVALUATION SET Fictional content created for local RAG testing Page 1 Coral Procurement Rules Purchasing controls This document is fictional and exists only to test retrieval, grounded answers, source separation, citations, and re"
+        },
+        {
+          "rank": 2,
+          "source": "project_orion_brief.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.827381,
+          "text_characters": 348,
+          "original_text_characters": 704,
+          "text_preview": "Purpose and delivery Objective Project Orion will deploy an inventory forecasting service to the Glasgow and Leeds distribution centres by 14 November 2026. Ownership Maya Chen is the executive sponsor. Ruben Patel is the delivery manager, "
+        },
+        {
+          "rank": 3,
+          "source": "scanned_ocr_test.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.793651,
+          "text_characters": 282,
+          "original_text_characters": 282,
+          "text_preview": "SCANNED OCR TEST Northwind Equipment Receipt Receipt number: NW-2048 Purchase date: 6 October 2026 Item: Portable document scanner Department: Research Operations Total paid: GBP 347.50 Approval code: RAVEN-82 This page contains image pixel"
+        },
+        {
+          "rank": 4,
+          "source": "beacon_security_standard.pdf",
+          "page": 2,
+          "url": null,
+          "score": 0.708333,
+          "text_characters": 304,
+          "original_text_characters": 634,
+          "text_preview": "Staff must preserve evidence and must not conduct their own forensic investigation. Record retention Security access logs are retained for 18 months. Closed investigation records are retained for six years from the closure date. Phishing ex"
+        },
+        {
+          "rank": 5,
+          "source": "harbour_expenses_guide.pdf",
+          "page": 1,
+          "url": null,
+          "score": 0.6,
+          "text_characters": 340,
+          "original_text_characters": 596,
+          "text_preview": "Allowances and claims Mileage Use of a personal car for approved business travel is reimbursed at 45 pence per mile for the first 10,000 miles in a tax year. Home internet Remote employees may claim up to GBP 30 per month toward home intern"
+        }
+      ]
+    }
+  ],
+  "retriever": "reranked",
+  "retriever_config": {
+    "candidate_k": 20,
+    "rrf_k": 5,
+    "vector_weight": 1.0,
+    "keyword_weight": 3.0,
+    "sentence_window_radius": 1,
+    "sentence_anchor_count": 2,
+    "minimum_sentence_anchor_coverage": 0.4,
+    "sentence_anchor_strategy": "lexical-with-semantic-fallback",
+    "rerank_pool_size": 5,
+    "rerank_rrf_k": 5,
+    "rerank_original_weight": 3.0,
+    "rerank_vector_weight": 1.0,
+    "rerank_keyword_weight": 2.0
+  }
+}
