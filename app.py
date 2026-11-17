@@ -19,9 +19,8 @@ from src.rag_project.conversation_ui import (
 from src.rag_project.embeddings import embed_chunks, load_embedding_model
 from src.rag_project.generator import (
     OLLAMA_MODEL,
-    OllamaError,
-    generate_grounded_answer,
 )
+from src.rag_project.generation_jobs import GenerationManager, GenerationSnapshot
 from src.rag_project.pdf_loader import extract_pdf_files
 from src.rag_project.query_rewriter import rewrite_follow_up
 from src.rag_project.reranker import RerankedRetriever
@@ -43,6 +42,7 @@ SOURCE_SELECTION_UI_VERSION = 3
 ACTIVE_CONVERSATION_KEY = "active_conversation_id"
 CONVERSATION_SOURCE_OWNER_KEY = "conversation_source_owner"
 CONVERSATION_SELECTOR_VERSION_KEY = "conversation_selector_version"
+ACTIVE_GENERATION_KEY = "active_generation_job_id"
 
 
 @st.cache_resource(show_spinner=False)
@@ -66,7 +66,15 @@ def get_history_store():
 @st.cache_resource(show_spinner=False)
 def get_conversation_store():
     """Open the Version 4 multi-turn conversation database."""
-    return ConversationStore()
+    store = ConversationStore()
+    store.recover_pending_messages()
+    return store
+
+
+@st.cache_resource(show_spinner=False)
+def get_generation_manager():
+    """Keep cancellable background generation jobs across Streamlit reruns."""
+    return GenerationManager()
 
 
 @st.cache_data(ttl=30, show_spinner=False)
@@ -138,6 +146,7 @@ def render_conversation_sources(citations: tuple[MessageCitation, ...]) -> None:
 def render_conversation_timeline(
     conversation_store: ConversationStore,
     conversation: Conversation,
+    hidden_message_id: str | None = None,
 ) -> None:
     """Render one persisted conversation in chronological order."""
     st.markdown(
@@ -155,6 +164,8 @@ def render_conversation_timeline(
         "cancelled": "Generation cancelled",
     }
     for message in messages:
+        if message.message_id == hidden_message_id:
+            continue
         with st.chat_message(message.role):
             if message.status in status_labels:
                 st.caption(status_labels[message.status])
@@ -169,6 +180,82 @@ def render_conversation_timeline(
                 st.caption(f"Searched as: {message.standalone_query}")
             if message.role == "assistant":
                 render_conversation_sources(message.citations)
+
+
+@st.fragment(run_every=0.25)
+def render_generation_job(
+    conversation_store: ConversationStore,
+    manager: GenerationManager,
+    job_id: str,
+    displayed_conversation_id: str,
+) -> None:
+    """Poll one worker, expose cancellation, and persist only terminal state."""
+    snapshot = manager.get(job_id)
+    if snapshot is None:
+        st.session_state.pop(ACTIVE_GENERATION_KEY, None)
+        st.rerun()
+
+    if snapshot.status == "running":
+        if snapshot.conversation_id == displayed_conversation_id:
+            with st.chat_message("assistant"):
+                st.caption(f"{OLLAMA_MODEL} · Generating…")
+                if snapshot.partial_answer:
+                    st.markdown(snapshot.partial_answer + " ▌")
+                else:
+                    st.markdown("Reading the retrieved evidence…")
+                if st.button(
+                    "Stop generating",
+                    key=f"stop-generation-{job_id}",
+                    type="secondary",
+                ):
+                    manager.cancel(job_id)
+                    st.rerun(scope="fragment")
+        return
+
+    try:
+        if snapshot.status == "completed" and snapshot.final_answer:
+            citations = message_citations(
+                snapshot.final_answer,
+                list(snapshot.results),
+            )
+            conversation_store.update_assistant_message(
+                snapshot.message_id,
+                snapshot.final_answer,
+                "completed",
+                citations=citations,
+            )
+            try:
+                get_history_store().add(
+                    snapshot.history_question,
+                    snapshot.final_answer,
+                    list(snapshot.results),
+                    selected_sources=snapshot.selected_sources,
+                )
+            except Exception as error:
+                st.warning(
+                    "The answer was saved to the conversation, but legacy "
+                    f"history could not be updated: {error}"
+                )
+        elif snapshot.status == "cancelled":
+            conversation_store.update_assistant_message(
+                snapshot.message_id,
+                "Generation stopped before a complete answer was produced.",
+                "cancelled",
+            )
+        else:
+            detail = snapshot.error or "Unknown generation error."
+            conversation_store.update_assistant_message(
+                snapshot.message_id,
+                f"I could not generate an answer: {detail}",
+                "failed",
+            )
+    except Exception as error:
+        st.error(f"The generation result could not be saved: {error}")
+        return
+
+    manager.remove(job_id)
+    st.session_state.pop(ACTIVE_GENERATION_KEY, None)
+    st.rerun()
 
 
 def render_conversation_sidebar(
@@ -905,11 +992,42 @@ searchable_chunks = filter_chunks_by_source_keys(
     embedded_chunks, set(selected_source_keys)
 )
 
-render_conversation_timeline(conversation_store, active_conversation)
+generation_manager = get_generation_manager()
+active_generation_id = st.session_state.get(ACTIVE_GENERATION_KEY)
+if not active_generation_id:
+    recoverable_generation = generation_manager.latest()
+    if recoverable_generation is not None:
+        active_generation_id = recoverable_generation.job_id
+        st.session_state[ACTIVE_GENERATION_KEY] = active_generation_id
+active_generation: GenerationSnapshot | None = (
+    generation_manager.get(active_generation_id)
+    if active_generation_id
+    else None
+)
+hidden_message_id = (
+    active_generation.message_id
+    if active_generation is not None
+    and active_generation.conversation_id == active_conversation.conversation_id
+    else None
+)
+render_conversation_timeline(
+    conversation_store,
+    active_conversation,
+    hidden_message_id=hidden_message_id,
+)
+if active_generation_id:
+    render_generation_job(
+        conversation_store,
+        generation_manager,
+        active_generation_id,
+        active_conversation.conversation_id,
+    )
 question = st.chat_input(
     "Ask a question about this conversation's sources",
-    disabled=not searchable_chunks,
+    disabled=not searchable_chunks or active_generation is not None,
 )
+if active_generation is not None:
+    st.caption("Finish or stop the current answer before asking another question.")
 
 if question:
     try:
@@ -947,42 +1065,35 @@ if question:
         )
         st.rerun()
     else:
-        with st.spinner(
-            f"{OLLAMA_MODEL} is writing an evidence-grounded answer..."
-        ):
-            try:
-                answer = generate_grounded_answer(retrieval_question, results)
-            except (OllamaError, ValueError) as error:
-                conversation_store.add_message(
-                    active_conversation.conversation_id,
-                    "assistant",
-                    f"I could not generate an answer: {error}",
-                    status="failed",
-                )
-                st.rerun()
-            else:
+        pending_message = None
+        try:
+            pending_message = conversation_store.add_message(
+                active_conversation.conversation_id,
+                "assistant",
+                "Preparing an evidence-grounded answer…",
+                status="pending",
+            )
+            job_id = generation_manager.start(
+                active_conversation.conversation_id,
+                pending_message.message_id,
+                retrieval_question,
+                results,
+                selected_source_names,
+                history_question=question,
+            )
+        except Exception as error:
+            if pending_message is not None:
                 try:
-                    get_history_store().add(
-                        question,
-                        answer,
-                        results,
-                        selected_sources=selected_source_names,
+                    conversation_store.update_assistant_message(
+                        pending_message.message_id,
+                        f"Generation could not be started: {error}",
+                        "failed",
                     )
-                except Exception as error:
-                    st.warning(f"The answer was created but history could not be saved: {error}")
-                try:
-                    conversation_store.add_message(
-                        active_conversation.conversation_id,
-                        "assistant",
-                        answer,
-                        citations=message_citations(answer, results),
-                    )
-                except Exception as error:
-                    st.error(f"The answer was created but could not be saved: {error}")
-                    with st.chat_message("assistant"):
-                        st.markdown(answer)
-                        render_answer_sources(answer, results)
-                else:
-                    st.rerun()
+                except Exception:
+                    pass
+            st.error(f"Generation could not be started: {error}")
+        else:
+            st.session_state[ACTIVE_GENERATION_KEY] = job_id
+            st.rerun()
 
 render_history("04")

@@ -421,6 +421,13 @@ visible and auditable, and rewriting safely falls back to the original text if
 Ollama is unavailable or returns invalid output. See
 [`docs/FOLLOW_UP_REWRITING.md`](docs/FOLLOW_UP_REWRITING.md).
 
+Ollama answers now stream through a background generation job, so the chat can
+show answer text as it arrives and expose a **Stop generating** control. SQLite
+stores a pending placeholder first, then atomically replaces it with a complete
+validated answer, a cancellation notice, or a failure message. Partial drafts
+and citations are never persisted as completed answers. See
+[`docs/STREAMING_GENERATION.md`](docs/STREAMING_GENERATION.md).
+
 ## Scanned PDFs and OCR
 
 OCR means **Optical Character Recognition**. A scanned PDF usually contains a
@@ -482,7 +489,7 @@ scope and acceptance criteria are in
 - [x] Add persistent conversation and message storage
 - [x] Build conversation management and chat timeline UI
 - [x] Rewrite follow-up questions into standalone retrieval queries
-- [ ] Stream local Ollama answers with cancellation and failure handling
+- [x] Stream local Ollama answers with cancellation and failure handling
 - [ ] Add claim-level citations and calibrated answer confidence
 - [ ] Benchmark an optional local cross-encoder reranker
 - [ ] Add a JSON conversational benchmark and CI quality gates

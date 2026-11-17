@@ -4,12 +4,15 @@ from datetime import UTC, datetime
 from src.rag_project.documents import DocumentChunk, SourceLocation, SourceType
 from src.rag_project.embeddings import EmbeddedChunk
 from src.rag_project.generator import (
+    GenerationCancelled,
     OLLAMA_MODEL,
     OllamaError,
     build_evidence,
     generate_grounded_answer,
     is_refusal_answer,
     needs_completeness_check,
+    stream_grounded_answer,
+    streamed_answer_text,
     supporting_source,
 )
 from src.rag_project.search import SearchResult
@@ -218,6 +221,57 @@ def test_generation_rejects_answer_that_cannot_be_grounded() -> None:
                 "message": {"content": '{"answer":"Zebra quantum pineapple"}'}
             },
         )
+
+
+def test_streaming_generation_exposes_answer_text_and_validates_final_json() -> None:
+    updates = []
+    fragments = [
+        '{"answer":"Employees ',
+        'receive 25 days.\\nCheck the policy.",',
+        '"source_numbers":[1]}',
+    ]
+    captured = {}
+
+    def fake_stream(payload, should_cancel):
+        captured.update(payload)
+        yield from fragments
+
+    answer = stream_grounded_answer(
+        "How much leave do employees receive?",
+        [result("Employees receive 25 days. Check the policy.", 4)],
+        updates.append,
+        send_stream=fake_stream,
+    )
+
+    assert answer == "Employees receive 25 days.\nCheck the policy. [Source 1]"
+    assert updates[-1] == answer
+    assert any(update == "Employees " for update in updates)
+    assert captured["stream"] is True
+    assert captured["format"]["required"] == ["answer", "source_numbers"]
+
+
+def test_partial_json_answer_extraction_handles_escapes_and_incomplete_escape() -> None:
+    assert streamed_answer_text('{"answer":"Line one\\nLine \\') == "Line one\nLine "
+    assert streamed_answer_text('{"answer":"Say \\"hello\\"."}') == 'Say "hello".'
+    assert streamed_answer_text('{"source_numbers":[') == ""
+
+
+def test_streaming_generation_honours_cancellation_without_final_answer() -> None:
+    updates = []
+
+    def cancelled_stream(payload, should_cancel):
+        yield '{"answer":"Partial'
+        raise GenerationCancelled("stopped")
+
+    with pytest.raises(GenerationCancelled):
+        stream_grounded_answer(
+            "A question",
+            [result("Relevant text", 1)],
+            updates.append,
+            send_stream=cancelled_stream,
+        )
+
+    assert all("Source" not in update for update in updates)
 
 
 @pytest.mark.parametrize(

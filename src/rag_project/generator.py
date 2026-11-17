@@ -1,6 +1,6 @@
 """Generate evidence-grounded answers with a local Ollama model."""
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 import json
 import re
 from typing import Any
@@ -70,6 +70,10 @@ SAFE_REFUSAL = "I cannot find a complete answer in the supplied sources."
 
 class OllamaError(RuntimeError):
     """Raised when the local Ollama service cannot generate a valid answer."""
+
+
+class GenerationCancelled(RuntimeError):
+    """Raised when the user stops an in-progress generation."""
 
 
 def is_refusal_answer(answer: str) -> bool:
@@ -272,6 +276,181 @@ def request_ollama(payload: dict[str, Any]) -> dict[str, Any]:
         ) from error
 
 
+def request_ollama_stream(
+    payload: dict[str, Any],
+    should_cancel: Callable[[], bool] = lambda: False,
+) -> Iterable[str]:
+    """Yield content fragments from Ollama's newline-delimited JSON stream."""
+    streaming_payload = {**payload, "stream": True}
+    request = Request(
+        OLLAMA_CHAT_URL,
+        data=json.dumps(streaming_payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urlopen(request, timeout=120) as response:
+            for raw_line in response:
+                if should_cancel():
+                    raise GenerationCancelled("Generation was stopped by the user.")
+                line = raw_line.decode("utf-8").strip()
+                if not line:
+                    continue
+                event = json.loads(line)
+                if not isinstance(event, dict):
+                    raise TypeError("Ollama stream event must be an object.")
+                if event.get("error"):
+                    raise OllamaError(str(event["error"]))
+                message = event.get("message", {})
+                if not isinstance(message, dict):
+                    raise TypeError("Ollama stream message must be an object.")
+                content = message.get("content", "")
+                if content:
+                    yield str(content)
+                if event.get("done"):
+                    break
+        if should_cancel():
+            raise GenerationCancelled("Generation was stopped by the user.")
+    except GenerationCancelled:
+        raise
+    except (
+        HTTPError,
+        URLError,
+        TimeoutError,
+        UnicodeError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as error:
+        raise OllamaError(
+            "The local Ollama service did not respond. Make sure Ollama is "
+            f"running and that {OLLAMA_MODEL} is installed."
+        ) from error
+
+
+def streamed_answer_text(content: str) -> str:
+    """Extract the currently available answer string from partial JSON."""
+    match = re.search(r'"answer"\s*:\s*"', content)
+    if not match:
+        return ""
+    position = match.end()
+    characters: list[str] = []
+    escapes = {
+        '"': '"',
+        "\\": "\\",
+        "/": "/",
+        "b": "\b",
+        "f": "\f",
+        "n": "\n",
+        "r": "\r",
+        "t": "\t",
+    }
+    while position < len(content):
+        character = content[position]
+        if character == '"':
+            break
+        if character != "\\":
+            characters.append(character)
+            position += 1
+            continue
+        if position + 1 >= len(content):
+            break
+        escaped = content[position + 1]
+        if escaped == "u":
+            code = content[position + 2 : position + 6]
+            if len(code) < 4 or not all(item in "0123456789abcdefABCDEF" for item in code):
+                break
+            characters.append(chr(int(code, 16)))
+            position += 6
+            continue
+        if escaped not in escapes:
+            break
+        characters.append(escapes[escaped])
+        position += 2
+    return "".join(characters)
+
+
+def _finalize_answer_content(
+    question: str,
+    content: str,
+    results: list[SearchResult],
+    send_request: Callable[[dict[str, Any]], dict[str, Any]],
+) -> str:
+    """Validate structured model output, review it, and attach citations."""
+    if not content.strip():
+        raise OllamaError("Ollama returned an empty or invalid answer.")
+    try:
+        structured = json.loads(content)
+        answer = structured["answer"].strip()
+        source_numbers = structured.get("source_numbers", [])
+    except (json.JSONDecodeError, KeyError, TypeError, ValueError) as error:
+        raise OllamaError("Ollama returned an invalid structured answer.") from error
+    if not answer:
+        raise OllamaError("Ollama returned an empty or invalid answer.")
+    if needs_completeness_check(question) or is_refusal_answer(answer):
+        answer, source_numbers = review_multi_part_answer(
+            question, answer, results, send_request
+        )
+        if is_refusal_answer(answer):
+            return answer
+    citations = " ".join(
+        f"[Source {number}]"
+        for number in validated_source_numbers(answer, source_numbers, results)
+    )
+    return f"{answer} {citations}"
+
+
+def stream_grounded_answer(
+    question: str,
+    results: list[SearchResult],
+    on_update: Callable[[str], None],
+    *,
+    should_cancel: Callable[[], bool] = lambda: False,
+    send_stream: Callable[
+        [dict[str, Any], Callable[[], bool]], Iterable[str]
+    ] = request_ollama_stream,
+    send_request: Callable[[dict[str, Any]], dict[str, Any]] = request_ollama,
+) -> str:
+    """Stream a draft, then return only a complete validated grounded answer."""
+    if not question.strip():
+        raise ValueError("Enter a question before generating an answer.")
+    if not results:
+        raise ValueError("No source evidence is available for this question.")
+    payload = {
+        "model": OLLAMA_MODEL,
+        "messages": [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {
+                "role": "user",
+                "content": (
+                    f"Question:\n{question.strip()}\n\n"
+                    f"Source evidence:\n{build_evidence(results)}"
+                ),
+            },
+        ],
+        "stream": True,
+        "think": False,
+        "format": ANSWER_SCHEMA,
+        "options": {"temperature": 0.0, "num_predict": 400},
+    }
+    content = ""
+    visible_answer = ""
+    for fragment in send_stream(payload, should_cancel):
+        if should_cancel():
+            raise GenerationCancelled("Generation was stopped by the user.")
+        content += fragment
+        current_answer = streamed_answer_text(content)
+        if current_answer != visible_answer:
+            visible_answer = current_answer
+            on_update(visible_answer)
+    if should_cancel():
+        raise GenerationCancelled("Generation was stopped by the user.")
+    final_answer = _finalize_answer_content(
+        question, content, results, send_request
+    )
+    on_update(final_answer)
+    return final_answer
+
+
 def generate_grounded_answer(
     question: str,
     results: list[SearchResult],
@@ -304,27 +483,4 @@ def generate_grounded_answer(
     response = send_request(payload)
     content = response.get("message", {}).get("content", "").strip()
 
-    if not content:
-        raise OllamaError("Ollama returned an empty or invalid answer.")
-
-    try:
-        structured = json.loads(content)
-        answer = structured["answer"].strip()
-        source_numbers = structured.get("source_numbers", [])
-    except (json.JSONDecodeError, KeyError, TypeError, ValueError) as error:
-        raise OllamaError("Ollama returned an invalid structured answer.") from error
-
-    if not answer:
-        raise OllamaError("Ollama returned an empty or invalid answer.")
-    if needs_completeness_check(question) or is_refusal_answer(answer):
-        answer, source_numbers = review_multi_part_answer(
-            question, answer, results, send_request
-        )
-        if is_refusal_answer(answer):
-            return answer
-
-    citations = " ".join(
-        f"[Source {number}]"
-        for number in validated_source_numbers(answer, source_numbers, results)
-    )
-    return f"{answer} {citations}"
+    return _finalize_answer_content(question, content, results, send_request)

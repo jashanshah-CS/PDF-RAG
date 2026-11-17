@@ -138,6 +138,55 @@ def test_failed_and_cancelled_message_statuses_are_persisted(tmp_path: Path) -> 
     ]
 
 
+def test_pending_assistant_message_can_be_atomically_completed(tmp_path: Path) -> None:
+    store = ConversationStore(tmp_path / "conversations.db")
+    conversation = store.create("Streaming")
+    pending = store.add_message(
+        conversation.conversation_id,
+        "assistant",
+        "Preparing",
+        status="pending",
+    )
+
+    completed = store.update_assistant_message(
+        pending.message_id,
+        "Employees receive 29 days. [Source 1]",
+        "completed",
+        citations=(citation(),),
+    )
+
+    assert completed.status == "completed"
+    assert completed.citations == (citation(),)
+    assert store.list_messages(conversation.conversation_id)[0] == completed
+
+
+def test_recover_pending_messages_does_not_keep_partial_answer(tmp_path: Path) -> None:
+    store = ConversationStore(tmp_path / "conversations.db")
+    conversation = store.create("Recovery")
+    store.add_message(conversation.conversation_id, "assistant", "Partial secret", status="pending")
+    store.add_message(conversation.conversation_id, "assistant", "Complete", status="completed")
+
+    assert store.recover_pending_messages() == 1
+    messages = store.list_messages(conversation.conversation_id)
+    assert messages[0].status == "failed"
+    assert messages[0].content == "Generation was interrupted before completion."
+    assert messages[1].content == "Complete"
+
+
+def test_finalization_rejects_user_pending_and_failed_citations(tmp_path: Path) -> None:
+    store = ConversationStore(tmp_path / "conversations.db")
+    conversation = store.create("Validation")
+    user = store.add_message(conversation.conversation_id, "user", "Question")
+    pending = store.add_message(conversation.conversation_id, "assistant", "Preparing", status="pending")
+
+    with pytest.raises(ValueError, match="assistant"):
+        store.update_assistant_message(user.message_id, "No", "failed")
+    with pytest.raises(ValueError, match="completed"):
+        store.update_assistant_message(pending.message_id, "No", "failed", citations=(citation(),))
+    with pytest.raises(KeyError, match="Unknown message"):
+        store.update_assistant_message("missing", "No", "failed")
+
+
 @pytest.mark.parametrize("role", ["system", "tool", ""])
 def test_rejects_invalid_message_roles(tmp_path: Path, role: str) -> None:
     store = ConversationStore(tmp_path / "conversations.db")

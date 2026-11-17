@@ -33,7 +33,7 @@ retrieval quality established in Versions 1–3.
    - Prevent instructions in chat history or documents from overriding the
      application grounding rules.
 
-4. **Streaming generation**
+4. **Streaming generation** — completed
    - Stream Ollama output into the current assistant message.
    - Expose retrieval, generation, completion, cancellation, and failure states.
    - Persist only complete, validated answers.

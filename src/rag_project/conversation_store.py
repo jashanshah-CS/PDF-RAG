@@ -412,6 +412,92 @@ class ConversationStore:
             ).fetchall()
             return [self._row_to_message(connection, row) for row in rows]
 
+    def update_assistant_message(
+        self,
+        message_id: str,
+        content: str,
+        status: str,
+        *,
+        citations: tuple[MessageCitation, ...] = (),
+        updated_at: datetime | None = None,
+    ) -> ConversationMessage:
+        """Atomically finalize one assistant placeholder and its citations."""
+        if status not in VALID_STATUSES:
+            raise ValueError(
+                f"Message status must be one of: {', '.join(sorted(VALID_STATUSES))}."
+            )
+        if status == "pending":
+            raise ValueError("A pending message cannot be finalized as pending.")
+        if citations and status != "completed":
+            raise ValueError("Only completed messages can contain citations.")
+        if len({citation.source_number for citation in citations}) != len(citations):
+            raise ValueError("Citation source numbers must be unique per message.")
+        for citation in citations:
+            self._validate_citation(citation)
+        timestamp = _timestamp(updated_at, field="message update")
+        cleaned_content = _required_text(content, field="Message content")
+        try:
+            with self._connect() as connection:
+                row = connection.execute(
+                    "SELECT role, status, conversation_id FROM conversation_messages "
+                    "WHERE message_id = ?",
+                    (message_id,),
+                ).fetchone()
+                if row is None:
+                    raise KeyError(f"Unknown message: {message_id}")
+                if row["role"] != "assistant":
+                    raise ValueError("Only assistant messages can be finalized.")
+                if row["status"] != "pending":
+                    raise ValueError("Only pending assistant messages can be finalized.")
+                connection.execute(
+                    "UPDATE conversation_messages SET content = ?, status = ? "
+                    "WHERE message_id = ?",
+                    (cleaned_content, status, message_id),
+                )
+                connection.execute(
+                    "DELETE FROM message_citations WHERE message_id = ?",
+                    (message_id,),
+                )
+                for citation in citations:
+                    connection.execute(
+                        """
+                        INSERT INTO message_citations (
+                            citation_id, message_id, source_name, source_type,
+                            location, page_number, url, chunk_number,
+                            source_number, excerpt
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """,
+                        (
+                            str(uuid4()), message_id, citation.source_name,
+                            citation.source_type, citation.location,
+                            citation.page_number, citation.url,
+                            citation.chunk_number, citation.source_number,
+                            citation.excerpt,
+                        ),
+                    )
+                connection.execute(
+                    "UPDATE conversations SET updated_at = MAX(updated_at, ?) "
+                    "WHERE conversation_id = ?",
+                    (timestamp.isoformat(), row["conversation_id"]),
+                )
+                updated = connection.execute(
+                    "SELECT * FROM conversation_messages WHERE message_id = ?",
+                    (message_id,),
+                ).fetchone()
+                return self._row_to_message(connection, updated)
+        except sqlite3.IntegrityError as exception:
+            raise ValueError("The message and its citations could not be updated.") from exception
+
+    def recover_pending_messages(self) -> int:
+        """Mark placeholders left by an interrupted app process as failed."""
+        with self._connect() as connection:
+            cursor = connection.execute(
+                "UPDATE conversation_messages SET content = ?, status = 'failed' "
+                "WHERE role = 'assistant' AND status = 'pending'",
+                ("Generation was interrupted before completion.",),
+            )
+            return cursor.rowcount
+
     def delete(self, conversation_id: str) -> bool:
         """Delete a conversation, its messages, sources, and citations."""
         with self._connect() as connection:
