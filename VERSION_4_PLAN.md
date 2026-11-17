@@ -70,4 +70,3 @@ retrieval quality established in Versions 1–3.
 - Mandatory cloud APIs or hosted model providers.
 - Multi-user authentication and organization accounts.
 - Replacing ChromaDB or SQLite without measured evidence that it is necessary.
-
