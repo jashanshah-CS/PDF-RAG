@@ -414,6 +414,13 @@ renders saved messages and citations as a chat timeline. See
 [`docs/CONVERSATION_UI.md`](docs/CONVERSATION_UI.md) for interaction behaviour,
 failure handling, and browser-test coverage.
 
+Context-dependent follow-ups such as “What about contractors?” are rewritten
+into self-contained retrieval questions using only the active conversation's
+bounded recent history. The original question and final retrieval query remain
+visible and auditable, and rewriting safely falls back to the original text if
+Ollama is unavailable or returns invalid output. See
+[`docs/FOLLOW_UP_REWRITING.md`](docs/FOLLOW_UP_REWRITING.md).
+
 ## Scanned PDFs and OCR
 
 OCR means **Optical Character Recognition**. A scanned PDF usually contains a
@@ -474,7 +481,7 @@ scope and acceptance criteria are in
 
 - [x] Add persistent conversation and message storage
 - [x] Build conversation management and chat timeline UI
-- [ ] Rewrite follow-up questions into standalone retrieval queries
+- [x] Rewrite follow-up questions into standalone retrieval queries
 - [ ] Stream local Ollama answers with cancellation and failure handling
 - [ ] Add claim-level citations and calibrated answer confidence
 - [ ] Benchmark an optional local cross-encoder reranker

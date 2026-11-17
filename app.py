@@ -23,6 +23,7 @@ from src.rag_project.generator import (
     generate_grounded_answer,
 )
 from src.rag_project.pdf_loader import extract_pdf_files
+from src.rag_project.query_rewriter import rewrite_follow_up
 from src.rag_project.reranker import RerankedRetriever
 from src.rag_project.search import SearchResult
 from src.rag_project.website_loader import WebsiteLoadError, crawl_website
@@ -158,6 +159,14 @@ def render_conversation_timeline(
             if message.status in status_labels:
                 st.caption(status_labels[message.status])
             st.markdown(message.content)
+            if (
+                message.role == "user"
+                and message.standalone_query
+                and message.original_question
+                and message.standalone_query.casefold()
+                != message.original_question.casefold()
+            ):
+                st.caption(f"Searched as: {message.standalone_query}")
             if message.role == "assistant":
                 render_conversation_sources(message.citations)
 
@@ -904,12 +913,17 @@ question = st.chat_input(
 
 if question:
     try:
+        prior_messages = conversation_store.list_messages(
+            active_conversation.conversation_id
+        )
+        query_rewrite = rewrite_follow_up(question, prior_messages)
+        retrieval_question = query_rewrite.standalone_query
         conversation_store.add_message(
             active_conversation.conversation_id,
             "user",
             question,
             original_question=question,
-            standalone_query=question,
+            standalone_query=retrieval_question,
         )
         if active_conversation.title == "New conversation":
             active_conversation = conversation_store.rename(
@@ -923,7 +937,7 @@ if question:
     try:
         results = RerankedRetriever(
             searchable_chunks, get_embedding_model()
-        ).search(question)
+        ).search(retrieval_question)
     except ValueError as error:
         conversation_store.add_message(
             active_conversation.conversation_id,
@@ -937,7 +951,7 @@ if question:
             f"{OLLAMA_MODEL} is writing an evidence-grounded answer..."
         ):
             try:
-                answer = generate_grounded_answer(question, results)
+                answer = generate_grounded_answer(retrieval_question, results)
             except (OllamaError, ValueError) as error:
                 conversation_store.add_message(
                     active_conversation.conversation_id,

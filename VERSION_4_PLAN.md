@@ -27,7 +27,7 @@ retrieval quality established in Versions 1–3.
    - Render messages as an accessible chat timeline in Light and Dark modes.
    - Keep document selection explicit for every conversation.
 
-3. **Grounded follow-up questions**
+3. **Grounded follow-up questions** — completed
    - Convert context-dependent follow-ups into standalone retrieval queries.
    - Retrieve evidence using the final Version 3 reranked pipeline.
    - Prevent instructions in chat history or documents from overriding the
