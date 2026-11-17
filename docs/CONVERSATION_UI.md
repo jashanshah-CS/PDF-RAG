@@ -80,4 +80,3 @@ The browser smoke test uses isolated temporary ChromaDB and SQLite paths. It
 verifies the rendered Version 4 header, conversation selector, create button,
 management panel, empty timeline, rename persistence, and matching dropdown and
 timeline titles without modifying the user's real document library.
-
