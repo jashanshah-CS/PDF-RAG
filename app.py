@@ -5,6 +5,17 @@ from dataclasses import replace
 import streamlit as st
 
 from src.rag_project.chunker import chunk_documents
+from src.rag_project.conversation_store import (
+    Conversation,
+    ConversationStore,
+    MessageCitation,
+)
+from src.rag_project.conversation_ui import (
+    choose_active_conversation,
+    conversation_title,
+    message_citations,
+    reconcile_conversation_sources,
+)
 from src.rag_project.embeddings import embed_chunks, load_embedding_model
 from src.rag_project.generator import (
     OLLAMA_MODEL,
@@ -24,11 +35,13 @@ from src.rag_project.vector_store import (
 from src.rag_project.history_store import HistoryCitation, QuestionHistoryStore
 from src.rag_project.citations import cited_source_numbers
 from src.rag_project.startup import run_startup_checks
-from src.rag_project.source_selection import reconcile_source_selection
 
 
 SOURCE_SELECTION_KEY = "selected_source_keys"
-SOURCE_SELECTION_UI_VERSION = 2
+SOURCE_SELECTION_UI_VERSION = 3
+ACTIVE_CONVERSATION_KEY = "active_conversation_id"
+CONVERSATION_SOURCE_OWNER_KEY = "conversation_source_owner"
+CONVERSATION_SELECTOR_VERSION_KEY = "conversation_selector_version"
 
 
 @st.cache_resource(show_spinner=False)
@@ -47,6 +60,12 @@ def get_vector_store():
 def get_history_store():
     """Open the readable local SQLite question history."""
     return QuestionHistoryStore()
+
+
+@st.cache_resource(show_spinner=False)
+def get_conversation_store():
+    """Open the Version 4 multi-turn conversation database."""
+    return ConversationStore()
 
 
 @st.cache_data(ttl=30, show_spinner=False)
@@ -96,6 +115,139 @@ def render_saved_sources(citations: tuple[HistoryCitation, ...]) -> None:
                     citation.url,
                     use_container_width=True,
                 )
+
+
+def render_conversation_sources(citations: tuple[MessageCitation, ...]) -> None:
+    """Render evidence persisted with one assistant chat message."""
+    if not citations:
+        return
+    st.markdown("**Sources used**")
+    for citation in citations:
+        with st.expander(f"Source {citation.source_number} · {citation.source_name}"):
+            st.caption(f"{citation.source_type.title()} · {citation.location}")
+            st.write(citation.excerpt)
+            if citation.url:
+                st.link_button(
+                    "Open original webpage ↗",
+                    citation.url,
+                    use_container_width=True,
+                )
+
+
+def render_conversation_timeline(
+    conversation_store: ConversationStore,
+    conversation: Conversation,
+) -> None:
+    """Render one persisted conversation in chronological order."""
+    st.markdown(
+        '<div class="section-label">03 · Conversation</div>',
+        unsafe_allow_html=True,
+    )
+    st.subheader(conversation.title)
+    messages = conversation_store.list_messages(conversation.conversation_id)
+    if not messages:
+        st.info("This conversation is empty. Ask a question to begin.")
+        return
+    status_labels = {
+        "pending": "Generating…",
+        "failed": "Generation failed",
+        "cancelled": "Generation cancelled",
+    }
+    for message in messages:
+        with st.chat_message(message.role):
+            if message.status in status_labels:
+                st.caption(status_labels[message.status])
+            st.markdown(message.content)
+            if message.role == "assistant":
+                render_conversation_sources(message.citations)
+
+
+def render_conversation_sidebar(
+    conversation_store: ConversationStore,
+) -> Conversation:
+    """Render conversation selection and management controls in the sidebar."""
+    st.markdown("### Conversations")
+    if st.button("＋ New conversation", use_container_width=True):
+        created = conversation_store.create()
+        st.session_state[ACTIVE_CONVERSATION_KEY] = created.conversation_id
+        st.session_state[CONVERSATION_SELECTOR_VERSION_KEY] = (
+            st.session_state.get(CONVERSATION_SELECTOR_VERSION_KEY, 0) + 1
+        )
+        st.session_state[CONVERSATION_SOURCE_OWNER_KEY] = None
+        st.rerun()
+
+    search = st.text_input(
+        "Find a conversation",
+        placeholder="Search titles or messages",
+        key="conversation-search",
+    )
+    all_conversations = conversation_store.list()
+    if not all_conversations:
+        all_conversations = [conversation_store.create()]
+    active_id = choose_active_conversation(
+        all_conversations,
+        st.session_state.get(ACTIVE_CONVERSATION_KEY),
+    )
+    assert active_id is not None
+    conversations = (
+        conversation_store.list(search) if search.strip() else all_conversations
+    )
+    active_item = next(
+        item for item in all_conversations if item.conversation_id == active_id
+    )
+    if active_id not in {item.conversation_id for item in conversations}:
+        conversations.insert(0, active_item)
+        if search.strip():
+            st.caption("No other matching conversations.")
+    options = [
+        (item.conversation_id, item.title)
+        for item in conversations
+    ]
+    active_option = next(option for option in options if option[0] == active_id)
+    selected_option = st.selectbox(
+        "Current conversation",
+        options=options,
+        index=options.index(active_option),
+        format_func=lambda option: option[1],
+        key=(
+            "conversation-selector-"
+            f"{st.session_state.get(CONVERSATION_SELECTOR_VERSION_KEY, 0)}"
+        ),
+    )
+    selected_id = selected_option[0]
+    if selected_id != st.session_state.get(ACTIVE_CONVERSATION_KEY):
+        st.session_state[ACTIVE_CONVERSATION_KEY] = selected_id
+        st.session_state[CONVERSATION_SOURCE_OWNER_KEY] = None
+        st.rerun()
+
+    active = conversation_store.get(selected_id)
+    assert active is not None
+    with st.expander("Manage current conversation"):
+        with st.form(f"rename-conversation-{selected_id}"):
+            title = st.text_input("Conversation title", value=active.title)
+            if st.form_submit_button("Rename", use_container_width=True):
+                conversation_store.rename(selected_id, title)
+                st.rerun()
+        confirmed = st.checkbox(
+            "Permanently delete this conversation",
+            key=f"delete-conversation-confirm-{selected_id}",
+        )
+        if st.button(
+            "Delete conversation",
+            disabled=not confirmed,
+            key=f"delete-conversation-{selected_id}",
+            use_container_width=True,
+        ):
+            conversation_store.delete(selected_id)
+            remaining = conversation_store.list(limit=1)
+            replacement = remaining[0] if remaining else conversation_store.create()
+            st.session_state[ACTIVE_CONVERSATION_KEY] = replacement.conversation_id
+            st.session_state[CONVERSATION_SELECTOR_VERSION_KEY] = (
+                st.session_state.get(CONVERSATION_SELECTOR_VERSION_KEY, 0) + 1
+            )
+            st.session_state[CONVERSATION_SOURCE_OWNER_KEY] = None
+            st.rerun()
+    return active
 
 
 def render_history(section_number: str) -> None:
@@ -356,6 +508,15 @@ st.markdown(
         border-radius: 5px;
     }
     [data-testid="stAlert"] * { color: var(--ink) !important; }
+    [data-testid="stChatMessage"] {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        margin-bottom: 0.75rem;
+    }
+    [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] p {
+        color: var(--ink);
+    }
     [data-baseweb="tab"] { color: var(--muted); }
     [aria-selected="true"][data-baseweb="tab"] { color: var(--forest); }
     [data-baseweb="input"], [data-baseweb="select"] {
@@ -492,6 +653,9 @@ if dark_mode:
         unsafe_allow_html=True,
     )
 
+conversation_store: ConversationStore | None = None
+active_conversation: Conversation | None = None
+
 with st.sidebar:
     st.markdown("## ✦ Local PDF AI")
     st.caption("PRIVATE DOCUMENT Q&A")
@@ -508,6 +672,16 @@ with st.sidebar:
             icon = "✅" if check.ok else ("⚠️" if not check.required else "❌")
             st.markdown(f"{icon} **{check.name}**")
             st.caption(check.message)
+    st.divider()
+    try:
+        conversation_store = get_conversation_store()
+        active_conversation = render_conversation_sidebar(conversation_store)
+    except Exception as error:
+        st.error(f"Conversation storage is unavailable: {error}")
+
+if conversation_store is None or active_conversation is None:
+    st.error("The app cannot start because conversation storage is unavailable.")
+    st.stop()
 
 startup_checks = get_startup_checks()
 storage_failure = next(
@@ -521,13 +695,13 @@ if storage_failure:
 st.markdown(
     """
     <div class="workspace-head">
-        <div class="workspace-kicker">Private knowledge workspace · Version 3</div>
+        <div class="workspace-kicker">Private knowledge workspace · Version 4</div>
         <div class="workspace-title-row">
             <h1>Ask your documents.</h1>
             <span class="local-mark">Local by design</span>
         </div>
         <p>Add a document or approved webpage, choose the sources that matter,
-        and receive an answer grounded in your own material.</p>
+        and continue a conversation grounded in your own material.</p>
     </div>
     """,
     unsafe_allow_html=True,
@@ -565,6 +739,7 @@ newly_added_source_keys: list[str] = []
 
 if st.session_state.get("source_selection_ui_version") != SOURCE_SELECTION_UI_VERSION:
     st.session_state[SOURCE_SELECTION_KEY] = []
+    st.session_state[CONVERSATION_SOURCE_OWNER_KEY] = None
     st.session_state["source_selection_ui_version"] = SOURCE_SELECTION_UI_VERSION
 
 if index_pdfs and uploaded_files:
@@ -616,6 +791,31 @@ if website_submitted:
                 st.error(f"I could not index that website: {error}")
 
 stored_sources = store.list_sources()
+available_source_keys = [source.source_key for source in stored_sources]
+source_labels = {
+    source.source_key: (
+        f"{'Website' if source.root_url else 'PDF'} · {source.source_name}"
+    )
+    for source in stored_sources
+}
+active_conversation = conversation_store.get(active_conversation.conversation_id)
+assert active_conversation is not None
+st.session_state[SOURCE_SELECTION_KEY] = reconcile_conversation_sources(
+    conversation_id=active_conversation.conversation_id,
+    loaded_conversation_id=st.session_state.get(CONVERSATION_SOURCE_OWNER_KEY),
+    saved_keys=active_conversation.selected_sources,
+    session_keys=st.session_state.get(SOURCE_SELECTION_KEY, []),
+    available_keys=available_source_keys,
+    newly_added_keys=newly_added_source_keys,
+)
+st.session_state[CONVERSATION_SOURCE_OWNER_KEY] = (
+    active_conversation.conversation_id
+)
+if tuple(st.session_state[SOURCE_SELECTION_KEY]) != active_conversation.selected_sources:
+    active_conversation = conversation_store.set_selected_sources(
+        active_conversation.conversation_id,
+        tuple(st.session_state[SOURCE_SELECTION_KEY]),
+    )
 
 embedded_chunks = store.load_all()
 if not embedded_chunks:
@@ -633,26 +833,14 @@ if not embedded_chunks:
         with st.container(border=True):
             st.markdown("#### Saved locally")
             st.caption("Your documents return automatically after an app restart.")
-    render_history("02")
+    render_conversation_timeline(conversation_store, active_conversation)
+    render_history("04")
     st.stop()
 
 st.success("Your documents are ready for questions.", icon="✅")
 
-st.markdown('<div class="section-label">02 · Ask a question</div>', unsafe_allow_html=True)
-st.subheader("What would you like to know?")
-
-available_source_keys = [source.source_key for source in stored_sources]
-source_labels = {
-    source.source_key: (
-        f"{'Website' if source.root_url else 'PDF'} · {source.source_name}"
-    )
-    for source in stored_sources
-}
-st.session_state[SOURCE_SELECTION_KEY] = reconcile_source_selection(
-    st.session_state.get(SOURCE_SELECTION_KEY, []),
-    available_source_keys,
-    newly_added_source_keys,
-)
+st.markdown('<div class="section-label">02 · Source scope</div>', unsafe_allow_html=True)
+st.subheader("Choose what this conversation can search")
 
 selected_count = len(st.session_state[SOURCE_SELECTION_KEY])
 st.markdown(
@@ -672,18 +860,31 @@ with st.popover("Choose from document library", use_container_width=True):
         "Use all", key="library-select-all", use_container_width=True
     ):
         st.session_state[SOURCE_SELECTION_KEY] = available_source_keys
+        conversation_store.set_selected_sources(
+            active_conversation.conversation_id,
+            tuple(available_source_keys),
+        )
         st.rerun()
     if library_clear_col.button(
         "Clear", key="library-clear", use_container_width=True
     ):
         st.session_state[SOURCE_SELECTION_KEY] = []
+        conversation_store.set_selected_sources(
+            active_conversation.conversation_id,
+            (),
+        )
         st.rerun()
     selected_source_keys = st.multiselect(
-        "Documents available for this question",
+        "Documents available for this conversation",
         options=available_source_keys,
         format_func=lambda key: source_labels[key],
         key=SOURCE_SELECTION_KEY,
         help="Only selected documents can contribute to the answer.",
+    )
+if tuple(selected_source_keys) != active_conversation.selected_sources:
+    active_conversation = conversation_store.set_selected_sources(
+        active_conversation.conversation_id,
+        tuple(selected_source_keys),
     )
 selected_source_names = tuple(
     source_labels[key] for key in selected_source_keys
@@ -695,22 +896,42 @@ searchable_chunks = filter_chunks_by_source_keys(
     embedded_chunks, set(selected_source_keys)
 )
 
-with st.form("semantic_search_form"):
-    question = st.text_input(
-        "Ask a question about these sources",
-        placeholder="For example: What is the annual leave policy?",
-    )
-    search_submitted = st.form_submit_button(
-        "Ask with Qwen3 8B  →", disabled=not searchable_chunks
-    )
+render_conversation_timeline(conversation_store, active_conversation)
+question = st.chat_input(
+    "Ask a question about this conversation's sources",
+    disabled=not searchable_chunks,
+)
 
-if search_submitted:
+if question:
+    try:
+        conversation_store.add_message(
+            active_conversation.conversation_id,
+            "user",
+            question,
+            original_question=question,
+            standalone_query=question,
+        )
+        if active_conversation.title == "New conversation":
+            active_conversation = conversation_store.rename(
+                active_conversation.conversation_id,
+                conversation_title(question),
+            )
+    except Exception as error:
+        st.error(f"The question could not be saved: {error}")
+        st.stop()
+
     try:
         results = RerankedRetriever(
             searchable_chunks, get_embedding_model()
         ).search(question)
     except ValueError as error:
-        st.warning(str(error))
+        conversation_store.add_message(
+            active_conversation.conversation_id,
+            "assistant",
+            f"I could not search this question: {error}",
+            status="failed",
+        )
+        st.rerun()
     else:
         with st.spinner(
             f"{OLLAMA_MODEL} is writing an evidence-grounded answer..."
@@ -718,7 +939,13 @@ if search_submitted:
             try:
                 answer = generate_grounded_answer(question, results)
             except (OllamaError, ValueError) as error:
-                st.error(str(error))
+                conversation_store.add_message(
+                    active_conversation.conversation_id,
+                    "assistant",
+                    f"I could not generate an answer: {error}",
+                    status="failed",
+                )
+                st.rerun()
             else:
                 try:
                     get_history_store().add(
@@ -729,9 +956,19 @@ if search_submitted:
                     )
                 except Exception as error:
                     st.warning(f"The answer was created but history could not be saved: {error}")
-                st.markdown('<div class="section-label">Answer</div>', unsafe_allow_html=True)
-                with st.container(border=True):
-                    st.markdown(f"### {answer}")
-                    render_answer_sources(answer, results)
+                try:
+                    conversation_store.add_message(
+                        active_conversation.conversation_id,
+                        "assistant",
+                        answer,
+                        citations=message_citations(answer, results),
+                    )
+                except Exception as error:
+                    st.error(f"The answer was created but could not be saved: {error}")
+                    with st.chat_message("assistant"):
+                        st.markdown(answer)
+                        render_answer_sources(answer, results)
+                else:
+                    st.rerun()
 
-render_history("03")
+render_history("04")

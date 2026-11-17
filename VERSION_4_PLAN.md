@@ -22,7 +22,7 @@ retrieval quality established in Versions 1–3.
      answers, and citations.
    - Keep existing Version 2 question history readable and unchanged.
 
-2. **Conversation interface**
+2. **Conversation interface** — completed
    - Add create, rename, select, search, and delete conversation controls.
    - Render messages as an accessible chat timeline in Light and Dark modes.
    - Keep document selection explicit for every conversation.

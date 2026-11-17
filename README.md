@@ -408,6 +408,12 @@ separate preserves the existing readable question history. See
 [`docs/CONVERSATION_STORAGE.md`](docs/CONVERSATION_STORAGE.md) for the schema,
 transactions, configuration, and tested behaviour.
 
+The sidebar now creates, searches, selects, renames, and deletes persistent
+conversations. Each conversation restores its own selected document scope and
+renders saved messages and citations as a chat timeline. See
+[`docs/CONVERSATION_UI.md`](docs/CONVERSATION_UI.md) for interaction behaviour,
+failure handling, and browser-test coverage.
+
 ## Scanned PDFs and OCR
 
 OCR means **Optical Character Recognition**. A scanned PDF usually contains a
@@ -467,7 +473,7 @@ scope and acceptance criteria are in
 [`VERSION_4_PLAN.md`](VERSION_4_PLAN.md).
 
 - [x] Add persistent conversation and message storage
-- [ ] Build conversation management and chat timeline UI
+- [x] Build conversation management and chat timeline UI
 - [ ] Rewrite follow-up questions into standalone retrieval queries
 - [ ] Stream local Ollama answers with cancellation and failure handling
 - [ ] Add claim-level citations and calibrated answer confidence
