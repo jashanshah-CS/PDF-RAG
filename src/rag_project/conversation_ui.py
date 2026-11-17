@@ -1,6 +1,6 @@
 """Deterministic helpers shared by the Version 4 conversation interface."""
 
-from src.rag_project.citations import cited_source_numbers
+from src.rag_project.citations import cited_claims, cited_source_numbers
 from src.rag_project.conversation_store import Conversation, MessageCitation
 from src.rag_project.search import SearchResult
 from src.rag_project.source_selection import reconcile_source_selection
@@ -55,18 +55,39 @@ def message_citations(
 ) -> tuple[MessageCitation, ...]:
     """Convert answer source labels into durable conversation citations."""
     citations: list[MessageCitation] = []
-    for number in cited_source_numbers(answer, len(results)):
-        chunk = results[number - 1].embedded_chunk.chunk
-        citations.append(
-            MessageCitation(
-                source_name=chunk.source_name,
-                source_type=chunk.source_type.value,
-                location=chunk.location.label(),
-                page_number=chunk.location.page_number,
-                url=chunk.location.url,
-                chunk_number=chunk.chunk_number,
-                source_number=number,
-                excerpt=chunk.text,
+    claims = cited_claims(answer, len(results))
+    if claims:
+        for claim in claims:
+            for number in claim.source_numbers:
+                chunk = results[number - 1].embedded_chunk.chunk
+                citations.append(
+                    MessageCitation(
+                        source_name=chunk.source_name,
+                        source_type=chunk.source_type.value,
+                        location=chunk.location.label(),
+                        page_number=chunk.location.page_number,
+                        url=chunk.location.url,
+                        chunk_number=chunk.chunk_number,
+                        source_number=number,
+                        excerpt=chunk.text,
+                        claim_number=claim.claim_number,
+                        claim_text=claim.text,
+                    )
+                )
+    else:
+        for number in cited_source_numbers(answer, len(results)):
+            chunk = results[number - 1].embedded_chunk.chunk
+            citations.append(
+                MessageCitation(
+                    source_name=chunk.source_name,
+                    source_type=chunk.source_type.value,
+                    location=chunk.location.label(),
+                    page_number=chunk.location.page_number,
+                    url=chunk.location.url,
+                    chunk_number=chunk.chunk_number,
+                    source_number=number,
+                    excerpt=chunk.text,
+                    claim_text=answer,
+                )
             )
-        )
     return tuple(citations)

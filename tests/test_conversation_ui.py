@@ -90,3 +90,17 @@ def test_answer_source_labels_become_ordered_durable_citations() -> None:
     assert citations[0].source_name == "second.pdf"
     assert citations[0].page_number == 4
     assert citations[0].excerpt == "Evidence from second.pdf."
+
+
+def test_same_source_can_support_two_distinct_claims() -> None:
+    citations = message_citations(
+        "First fact from policy. [Source 1]\nSecond fact from policy. [Source 1]",
+        [result("policy.pdf", 3)],
+    )
+
+    assert [(item.claim_number, item.source_number) for item in citations] == [
+        (1, 1),
+        (2, 1),
+    ]
+    assert citations[0].claim_text == "First fact from policy."
+    assert citations[1].claim_text == "Second fact from policy."

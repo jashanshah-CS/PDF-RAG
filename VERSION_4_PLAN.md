@@ -38,7 +38,7 @@ retrieval quality established in Versions 1–3.
    - Expose retrieval, generation, completion, cancellation, and failure states.
    - Persist only complete, validated answers.
 
-5. **Claim-level citations and confidence**
+5. **Claim-level citations and confidence** — completed
    - Associate answer claims with retrieved evidence identifiers.
    - Open the exact source card when a citation is selected.
    - Show calibrated supported, uncertain, or unsupported states without

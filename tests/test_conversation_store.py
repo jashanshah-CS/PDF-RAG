@@ -153,10 +153,12 @@ def test_pending_assistant_message_can_be_atomically_completed(tmp_path: Path) -
         "Employees receive 29 days. [Source 1]",
         "completed",
         citations=(citation(),),
+        confidence="supported",
     )
 
     assert completed.status == "completed"
     assert completed.citations == (citation(),)
+    assert completed.confidence == "supported"
     assert store.list_messages(conversation.conversation_id)[0] == completed
 
 
@@ -206,6 +208,14 @@ def test_rejects_invalid_content_status_citations_and_limits(tmp_path: Path) -> 
         store.add_message(conversation.conversation_id, "assistant", "Answer", status="unknown")
     with pytest.raises(ValueError, match="Only assistant"):
         store.add_message(conversation.conversation_id, "user", "Question", citations=(citation(),))
+    with pytest.raises(ValueError, match="completed"):
+        store.add_message(
+            conversation.conversation_id,
+            "assistant",
+            "Preparing",
+            status="pending",
+            confidence="supported",
+        )
     with pytest.raises(ValueError, match="unique"):
         store.add_message(
             conversation.conversation_id,
@@ -268,3 +278,35 @@ def test_rejects_database_from_newer_schema(tmp_path: Path) -> None:
 
     with pytest.raises(RuntimeError, match="newer schema version"):
         ConversationStore(path)
+
+
+def test_version_one_database_migrates_claims_and_confidence(tmp_path: Path) -> None:
+    path = tmp_path / "version-one.db"
+    with sqlite3.connect(path) as connection:
+        ConversationStore._migrate_to_version_1(connection)
+        connection.execute(
+            "INSERT INTO conversations VALUES (?, ?, ?, ?)",
+            ("conversation", "Legacy", START.isoformat(), START.isoformat()),
+        )
+        connection.execute(
+            "INSERT INTO conversation_messages VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                "message", "conversation", "assistant", "Legacy [Source 1]",
+                "completed", None, None, START.isoformat(),
+            ),
+        )
+        connection.execute(
+            "INSERT INTO message_citations VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                "citation", "message", "legacy.pdf", "pdf", "page 1", 1,
+                None, 1, 1, "Legacy evidence",
+            ),
+        )
+
+    migrated = ConversationStore(path).list_messages("conversation")[0]
+
+    assert migrated.confidence is None
+    assert migrated.citations[0].claim_number == 1
+    assert migrated.citations[0].claim_text == ""
+    with sqlite3.connect(path) as connection:
+        assert connection.execute("PRAGMA user_version").fetchone()[0] == 2

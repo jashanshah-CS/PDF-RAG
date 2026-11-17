@@ -428,6 +428,13 @@ validated answer, a cancellation notice, or a failure message. Partial drafts
 and citations are never persisted as completed answers. See
 [`docs/STREAMING_GENERATION.md`](docs/STREAMING_GENERATION.md).
 
+Completed answers are split into atomic factual claims. Each claim carries its
+own validated source relationship, and selecting that claim's source control
+opens the exact stored passage. The interface reports a discrete **Supported**,
+**Uncertain**, or **Unsupported** evidence state based on citation coverage and
+lexical evidence overlap—never a similarity score presented as probability.
+See [`docs/CLAIM_CITATIONS_AND_CONFIDENCE.md`](docs/CLAIM_CITATIONS_AND_CONFIDENCE.md).
+
 ## Scanned PDFs and OCR
 
 OCR means **Optical Character Recognition**. A scanned PDF usually contains a
@@ -490,7 +497,7 @@ scope and acceptance criteria are in
 - [x] Build conversation management and chat timeline UI
 - [x] Rewrite follow-up questions into standalone retrieval queries
 - [x] Stream local Ollama answers with cancellation and failure handling
-- [ ] Add claim-level citations and calibrated answer confidence
+- [x] Add claim-level citations and calibrated answer confidence
 - [ ] Benchmark an optional local cross-encoder reranker
 - [ ] Add a JSON conversational benchmark and CI quality gates
 

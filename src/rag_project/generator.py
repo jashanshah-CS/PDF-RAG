@@ -7,6 +7,7 @@ from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
+from src.rag_project.citations import calibrated_confidence
 from src.rag_project.search import SearchResult
 from src.rag_project.config import SETTINGS
 
@@ -34,8 +35,11 @@ headers, before refusing. Only when none of the evidence supports the requested
 attribute, say: "I cannot find this in the supplied sources." Answer in a complete
 sentence that restates the subject and key terms from the evidence. Return the
 number of every evidence block used in source_numbers; include all supporting
-blocks when an answer combines facts from multiple sources. Do not mention the
-source_numbers field or its value in the answer prose."""
+blocks when an answer combines facts from multiple sources. Also split the
+answer into atomic factual claims. Each claim must contain its own plain text
+and only the source numbers that directly support it. Do not include citation
+labels in the answer or claim text; the application adds them after validation.
+Do not mention the source_numbers field or its value in the answer prose."""
 
 ANSWER_SCHEMA = {
     "type": "object",
@@ -46,8 +50,24 @@ ANSWER_SCHEMA = {
             "items": {"type": "integer"},
             "description": "Every numbered evidence block used for the answer.",
         },
+        "claims": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "text": {"type": "string"},
+                    "source_numbers": {
+                        "type": "array",
+                        "items": {"type": "integer"},
+                    },
+                },
+                "required": ["text", "source_numbers"],
+                "additionalProperties": False,
+            },
+            "description": "Atomic factual claims and their supporting blocks.",
+        },
     },
-    "required": ["answer", "source_numbers"],
+    "required": ["answer", "source_numbers", "claims"],
     "additionalProperties": False,
 }
 
@@ -60,8 +80,9 @@ COMPLETENESS_SCHEMA = {
             "type": "array",
             "items": {"type": "integer"},
         },
+        "claims": ANSWER_SCHEMA["properties"]["claims"],
     },
-    "required": ["complete", "answer", "source_numbers"],
+    "required": ["complete", "answer", "source_numbers", "claims"],
     "additionalProperties": False,
 }
 
@@ -204,7 +225,7 @@ def review_multi_part_answer(
     draft_answer: str,
     results: list[SearchResult],
     send_request: Callable[[dict[str, Any]], dict[str, Any]],
-) -> tuple[str, object]:
+) -> tuple[str, object, object]:
     """Review and, when necessary, rewrite one multi-part grounded answer."""
     payload = {
         "model": OLLAMA_MODEL,
@@ -223,6 +244,9 @@ def review_multi_part_answer(
                     "matches an obvious misspelling. Set complete "
                     "to false if any requested part lacks evidence. List every evidence "
                     "block used in source_numbers."
+                    " Also split the revised answer into atomic factual claims. "
+                    "Each claim must contain only its own text and the source "
+                    "numbers that directly support that claim."
                 ),
             },
             {
@@ -247,14 +271,15 @@ def review_multi_part_answer(
         complete = structured["complete"]
         answer = structured["answer"].strip()
         source_numbers = structured.get("source_numbers", [])
+        claims = structured.get("claims", [])
         if not isinstance(complete, bool) or not answer:
             raise ValueError
     except (json.JSONDecodeError, KeyError, TypeError, ValueError):
-        return SAFE_REFUSAL, []
+        return SAFE_REFUSAL, [], []
 
     if not complete:
-        return SAFE_REFUSAL, []
-    return answer, source_numbers
+        return SAFE_REFUSAL, [], []
+    return answer, source_numbers, claims
 
 
 def request_ollama(payload: dict[str, Any]) -> dict[str, Any]:
@@ -382,21 +407,52 @@ def _finalize_answer_content(
         structured = json.loads(content)
         answer = structured["answer"].strip()
         source_numbers = structured.get("source_numbers", [])
+        claims = structured.get("claims", [])
     except (json.JSONDecodeError, KeyError, TypeError, ValueError) as error:
         raise OllamaError("Ollama returned an invalid structured answer.") from error
     if not answer:
         raise OllamaError("Ollama returned an empty or invalid answer.")
     if needs_completeness_check(question) or is_refusal_answer(answer):
-        answer, source_numbers = review_multi_part_answer(
+        answer, source_numbers, claims = review_multi_part_answer(
             question, answer, results, send_request
         )
         if is_refusal_answer(answer):
             return answer
-    citations = " ".join(
-        f"[Source {number}]"
-        for number in validated_source_numbers(answer, source_numbers, results)
-    )
-    return f"{answer} {citations}"
+    formatted_claims: list[str] = []
+    if isinstance(claims, list):
+        for item in claims:
+            if not isinstance(item, dict):
+                continue
+            claim_text = item.get("text")
+            if not isinstance(claim_text, str) or not claim_text.strip():
+                continue
+            clean_text = re.sub(
+                r"\s*\[Source\s+\d+\]", "", claim_text, flags=re.IGNORECASE
+            ).strip()
+            if not clean_text:
+                continue
+            numbers = validated_source_numbers(
+                clean_text,
+                item.get("source_numbers", []),
+                results,
+            )
+            citations = " ".join(f"[Source {number}]" for number in numbers)
+            formatted_claims.append(f"{clean_text} {citations}")
+    if formatted_claims:
+        final_answer = "\n".join(formatted_claims)
+    else:
+        citations = " ".join(
+            f"[Source {number}]"
+            for number in validated_source_numbers(answer, source_numbers, results)
+        )
+        final_answer = f"{answer} {citations}"
+    evidence_texts = {
+        number: result.embedded_chunk.chunk.text
+        for number, result in enumerate(results, start=1)
+    }
+    if calibrated_confidence(final_answer, evidence_texts) == "unsupported":
+        return "I cannot find this in the supplied sources."
+    return final_answer
 
 
 def stream_grounded_answer(

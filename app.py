@@ -7,6 +7,7 @@ import streamlit as st
 from src.rag_project.chunker import chunk_documents
 from src.rag_project.conversation_store import (
     Conversation,
+    ConversationMessage,
     ConversationStore,
     MessageCitation,
 )
@@ -33,7 +34,7 @@ from src.rag_project.vector_store import (
     website_source_key,
 )
 from src.rag_project.history_store import HistoryCitation, QuestionHistoryStore
-from src.rag_project.citations import cited_source_numbers
+from src.rag_project.citations import calibrated_confidence, cited_source_numbers
 from src.rag_project.startup import run_startup_checks
 
 
@@ -143,6 +144,46 @@ def render_conversation_sources(citations: tuple[MessageCitation, ...]) -> None:
                 )
 
 
+def render_completed_answer(message: ConversationMessage) -> None:
+    """Render claim-level evidence controls and a calibrated state label."""
+    confidence_labels = {
+        "supported": "Supported · every claim has direct source evidence",
+        "uncertain": "Uncertain · at least one claim has limited evidence overlap",
+        "unsupported": "Unsupported · the supplied sources do not support an answer",
+    }
+    if message.confidence in confidence_labels:
+        st.caption(f"Evidence status: {confidence_labels[message.confidence]}")
+
+    claim_groups: dict[int, list[MessageCitation]] = {}
+    for citation in message.citations:
+        claim_groups.setdefault(citation.claim_number, []).append(citation)
+    has_claim_text = bool(claim_groups) and all(
+        group[0].claim_text.strip() for group in claim_groups.values()
+    )
+    if not has_claim_text:
+        st.markdown(message.content)
+        render_conversation_sources(message.citations)
+        return
+
+    for claim_number, citations in sorted(claim_groups.items()):
+        st.markdown(citations[0].claim_text)
+        for citation in citations:
+            with st.popover(
+                f"Claim {claim_number} · Source {citation.source_number} · "
+                f"{citation.source_name}"
+            ):
+                st.caption(
+                    f"{citation.source_type.title()} · {citation.location}"
+                )
+                st.write(citation.excerpt)
+                if citation.url:
+                    st.link_button(
+                        "Open original webpage ↗",
+                        citation.url,
+                        use_container_width=True,
+                    )
+
+
 def render_conversation_timeline(
     conversation_store: ConversationStore,
     conversation: Conversation,
@@ -169,7 +210,10 @@ def render_conversation_timeline(
         with st.chat_message(message.role):
             if message.status in status_labels:
                 st.caption(status_labels[message.status])
-            st.markdown(message.content)
+            if message.role == "assistant" and message.status == "completed":
+                render_completed_answer(message)
+            else:
+                st.markdown(message.content)
             if (
                 message.role == "user"
                 and message.standalone_query
@@ -178,8 +222,6 @@ def render_conversation_timeline(
                 != message.original_question.casefold()
             ):
                 st.caption(f"Searched as: {message.standalone_query}")
-            if message.role == "assistant":
-                render_conversation_sources(message.citations)
 
 
 @st.fragment(run_every=0.25)
@@ -214,6 +256,14 @@ def render_generation_job(
 
     try:
         if snapshot.status == "completed" and snapshot.final_answer:
+            evidence_texts = {
+                number: result.embedded_chunk.chunk.text
+                for number, result in enumerate(snapshot.results, start=1)
+            }
+            confidence = calibrated_confidence(
+                snapshot.final_answer,
+                evidence_texts,
+            )
             citations = message_citations(
                 snapshot.final_answer,
                 list(snapshot.results),
@@ -223,6 +273,7 @@ def render_generation_job(
                 snapshot.final_answer,
                 "completed",
                 citations=citations,
+                confidence=confidence,
             )
             try:
                 get_history_store().add(

@@ -11,10 +11,11 @@ from uuid import uuid4
 from src.rag_project.config import SETTINGS
 
 
-CURRENT_SCHEMA_VERSION = 1
+CURRENT_SCHEMA_VERSION = 2
 DEFAULT_CONVERSATION_PATH = SETTINGS.conversation_path
 VALID_ROLES = frozenset({"user", "assistant"})
 VALID_STATUSES = frozenset({"pending", "completed", "failed", "cancelled"})
+VALID_CONFIDENCE = frozenset({"supported", "uncertain", "unsupported"})
 
 
 @dataclass(frozen=True)
@@ -40,6 +41,8 @@ class MessageCitation:
     chunk_number: int
     source_number: int
     excerpt: str
+    claim_number: int = 1
+    claim_text: str = ""
 
 
 @dataclass(frozen=True)
@@ -55,6 +58,7 @@ class ConversationMessage:
     standalone_query: str | None
     citations: tuple[MessageCitation, ...]
     created_at: datetime
+    confidence: str | None = None
 
 
 def _timestamp(value: datetime | None, *, field: str) -> datetime:
@@ -106,6 +110,9 @@ class ConversationStore:
                 )
             if version < 1:
                 self._migrate_to_version_1(connection)
+                version = 1
+            if version < 2:
+                self._migrate_to_version_2(connection)
 
     @staticmethod
     def _migrate_to_version_1(connection: sqlite3.Connection) -> None:
@@ -181,7 +188,59 @@ class ConversationStore:
             "CREATE INDEX idx_citations_message "
             "ON message_citations(message_id, source_number)"
         )
-        connection.execute(f"PRAGMA user_version = {CURRENT_SCHEMA_VERSION}")
+        connection.execute("PRAGMA user_version = 1")
+
+    @staticmethod
+    def _migrate_to_version_2(connection: sqlite3.Connection) -> None:
+        """Add answer confidence and claim-specific citation relationships."""
+        connection.execute(
+            "ALTER TABLE conversation_messages ADD COLUMN confidence TEXT "
+            "CHECK (confidence IS NULL OR confidence IN "
+            "('supported', 'uncertain', 'unsupported'))"
+        )
+        connection.execute("DROP INDEX IF EXISTS idx_citations_message")
+        connection.execute(
+            "ALTER TABLE message_citations RENAME TO message_citations_v1"
+        )
+        connection.execute(
+            """
+            CREATE TABLE message_citations (
+                citation_id TEXT PRIMARY KEY,
+                message_id TEXT NOT NULL,
+                source_name TEXT NOT NULL,
+                source_type TEXT NOT NULL,
+                location TEXT NOT NULL,
+                page_number INTEGER,
+                url TEXT,
+                chunk_number INTEGER NOT NULL CHECK (chunk_number > 0),
+                source_number INTEGER NOT NULL CHECK (source_number > 0),
+                excerpt TEXT NOT NULL,
+                claim_number INTEGER NOT NULL CHECK (claim_number > 0),
+                claim_text TEXT NOT NULL,
+                UNIQUE (message_id, claim_number, source_number),
+                FOREIGN KEY (message_id) REFERENCES conversation_messages(message_id)
+                    ON DELETE CASCADE
+            )
+            """
+        )
+        connection.execute(
+            """
+            INSERT INTO message_citations (
+                citation_id, message_id, source_name, source_type, location,
+                page_number, url, chunk_number, source_number, excerpt,
+                claim_number, claim_text
+            )
+            SELECT citation_id, message_id, source_name, source_type, location,
+                page_number, url, chunk_number, source_number, excerpt, 1, ''
+            FROM message_citations_v1
+            """
+        )
+        connection.execute("DROP TABLE message_citations_v1")
+        connection.execute(
+            "CREATE INDEX idx_citations_message "
+            "ON message_citations(message_id, claim_number, source_number)"
+        )
+        connection.execute("PRAGMA user_version = 2")
 
     def create(
         self,
@@ -309,6 +368,7 @@ class ConversationStore:
         original_question: str | None = None,
         standalone_query: str | None = None,
         citations: tuple[MessageCitation, ...] = (),
+        confidence: str | None = None,
         created_at: datetime | None = None,
     ) -> ConversationMessage:
         """Save one message and all its citations in a single transaction."""
@@ -320,8 +380,21 @@ class ConversationStore:
             )
         if citations and role != "assistant":
             raise ValueError("Only assistant messages can contain citations.")
-        if len({citation.source_number for citation in citations}) != len(citations):
-            raise ValueError("Citation source numbers must be unique per message.")
+        citation_keys = {
+            (citation.claim_number, citation.source_number) for citation in citations
+        }
+        if len(citation_keys) != len(citations):
+            raise ValueError(
+                "Citation source numbers must be unique within each claim."
+            )
+        if confidence is not None and confidence not in VALID_CONFIDENCE:
+            raise ValueError(
+                "Message confidence must be supported, uncertain, or unsupported."
+            )
+        if confidence is not None and role != "assistant":
+            raise ValueError("Only assistant messages can have confidence.")
+        if confidence is not None and status != "completed":
+            raise ValueError("Only completed messages can have confidence.")
         for citation in citations:
             self._validate_citation(citation)
 
@@ -341,6 +414,7 @@ class ConversationStore:
             standalone_query=_optional_text(standalone_query),
             citations=citations,
             created_at=timestamp,
+            confidence=confidence,
         )
         try:
             with self._connect() as connection:
@@ -350,8 +424,8 @@ class ConversationStore:
                     """
                     INSERT INTO conversation_messages (
                         message_id, conversation_id, role, content, status,
-                        original_question, standalone_query, created_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                        original_question, standalone_query, created_at, confidence
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         message.message_id,
@@ -362,6 +436,7 @@ class ConversationStore:
                         message.original_question,
                         message.standalone_query,
                         message.created_at.isoformat(),
+                        message.confidence,
                     ),
                 )
                 for citation in citations:
@@ -370,8 +445,8 @@ class ConversationStore:
                         INSERT INTO message_citations (
                             citation_id, message_id, source_name, source_type,
                             location, page_number, url, chunk_number,
-                            source_number, excerpt
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            source_number, excerpt, claim_number, claim_text
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """,
                         (
                             str(uuid4()),
@@ -384,6 +459,8 @@ class ConversationStore:
                             citation.chunk_number,
                             citation.source_number,
                             citation.excerpt,
+                            citation.claim_number,
+                            citation.claim_text,
                         ),
                     )
                 connection.execute(
@@ -419,6 +496,7 @@ class ConversationStore:
         status: str,
         *,
         citations: tuple[MessageCitation, ...] = (),
+        confidence: str | None = None,
         updated_at: datetime | None = None,
     ) -> ConversationMessage:
         """Atomically finalize one assistant placeholder and its citations."""
@@ -430,8 +508,21 @@ class ConversationStore:
             raise ValueError("A pending message cannot be finalized as pending.")
         if citations and status != "completed":
             raise ValueError("Only completed messages can contain citations.")
-        if len({citation.source_number for citation in citations}) != len(citations):
-            raise ValueError("Citation source numbers must be unique per message.")
+        if confidence is not None and confidence not in VALID_CONFIDENCE:
+            raise ValueError(
+                "Message confidence must be supported, uncertain, or unsupported."
+            )
+        if status == "completed" and confidence is None:
+            confidence = "uncertain"
+        if status != "completed" and confidence is not None:
+            raise ValueError("Only completed messages can have confidence.")
+        citation_keys = {
+            (citation.claim_number, citation.source_number) for citation in citations
+        }
+        if len(citation_keys) != len(citations):
+            raise ValueError(
+                "Citation source numbers must be unique within each claim."
+            )
         for citation in citations:
             self._validate_citation(citation)
         timestamp = _timestamp(updated_at, field="message update")
@@ -450,9 +541,10 @@ class ConversationStore:
                 if row["status"] != "pending":
                     raise ValueError("Only pending assistant messages can be finalized.")
                 connection.execute(
-                    "UPDATE conversation_messages SET content = ?, status = ? "
+                    "UPDATE conversation_messages SET content = ?, status = ?, "
+                    "confidence = ? "
                     "WHERE message_id = ?",
-                    (cleaned_content, status, message_id),
+                    (cleaned_content, status, confidence, message_id),
                 )
                 connection.execute(
                     "DELETE FROM message_citations WHERE message_id = ?",
@@ -464,8 +556,8 @@ class ConversationStore:
                         INSERT INTO message_citations (
                             citation_id, message_id, source_name, source_type,
                             location, page_number, url, chunk_number,
-                            source_number, excerpt
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            source_number, excerpt, claim_number, claim_text
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """,
                         (
                             str(uuid4()), message_id, citation.source_name,
@@ -473,6 +565,8 @@ class ConversationStore:
                             citation.page_number, citation.url,
                             citation.chunk_number, citation.source_number,
                             citation.excerpt,
+                            citation.claim_number,
+                            citation.claim_text,
                         ),
                     )
                 connection.execute(
@@ -545,6 +639,8 @@ class ConversationStore:
             raise ValueError("Citation page number must be greater than zero.")
         if citation.chunk_number <= 0 or citation.source_number <= 0:
             raise ValueError("Citation chunk and source numbers must be greater than zero.")
+        if citation.claim_number <= 0:
+            raise ValueError("Citation claim number must be greater than zero.")
 
     @staticmethod
     def _row_to_conversation(
@@ -582,6 +678,8 @@ class ConversationStore:
                 chunk_number=int(item["chunk_number"]),
                 source_number=int(item["source_number"]),
                 excerpt=str(item["excerpt"]),
+                claim_number=int(item["claim_number"]),
+                claim_text=str(item["claim_text"]),
             )
             for item in citation_rows
         )
@@ -595,4 +693,5 @@ class ConversationStore:
             standalone_query=row["standalone_query"],
             citations=citations,
             created_at=datetime.fromisoformat(str(row["created_at"])),
+            confidence=row["confidence"],
         )

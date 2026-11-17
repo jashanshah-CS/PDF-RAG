@@ -87,7 +87,9 @@ def test_generation_sends_grounded_non_streaming_chat_request() -> None:
     assert captured_payload["model"] == OLLAMA_MODEL
     assert captured_payload["stream"] is False
     assert captured_payload["think"] is False
-    assert captured_payload["format"]["required"] == ["answer", "source_numbers"]
+    assert captured_payload["format"]["required"] == [
+        "answer", "source_numbers", "claims"
+    ]
     assert captured_payload["options"]["temperature"] == 0.0
     assert "outside knowledge" in captured_payload["messages"][0]["content"]
     assert "exact attribute requested" in captured_payload["messages"][0]["content"]
@@ -247,7 +249,56 @@ def test_streaming_generation_exposes_answer_text_and_validates_final_json() -> 
     assert updates[-1] == answer
     assert any(update == "Employees " for update in updates)
     assert captured["stream"] is True
-    assert captured["format"]["required"] == ["answer", "source_numbers"]
+    assert captured["format"]["required"] == [
+        "answer", "source_numbers", "claims"
+    ]
+
+
+def test_generation_formats_each_atomic_claim_with_its_own_sources() -> None:
+    results = [
+        result("Aurora allows 20 days abroad.", 1),
+        result("Harbour reimburses internet monthly.", 2),
+    ]
+    response = {
+        "message": {
+            "content": (
+                '{"answer":"Aurora allows 20 days abroad. Harbour reimburses '
+                'internet monthly.","source_numbers":[1,2],"claims":['
+                '{"text":"Aurora allows 20 days abroad.","source_numbers":[1]},'
+                '{"text":"Harbour reimburses internet monthly.",'
+                '"source_numbers":[2]}]}'
+            )
+        }
+    }
+
+    answer = generate_grounded_answer(
+        "Summarize the two policies.",
+        results,
+        send_request=lambda payload: response,
+    )
+
+    assert answer.splitlines() == [
+        "Aurora allows 20 days abroad. [Source 1]",
+        "Harbour reimburses internet monthly. [Source 2]",
+    ]
+
+
+def test_claim_with_unrelated_cited_evidence_becomes_safe_refusal() -> None:
+    answer = generate_grounded_answer(
+        "What is the cafeteria menu?",
+        [result("Annual leave is 25 days.", 1)],
+        send_request=lambda payload: {
+            "message": {
+                "content": (
+                    '{"answer":"Pizza is served.","source_numbers":[1],'
+                    '"claims":[{"text":"Pizza is served.",'
+                    '"source_numbers":[1]}]}'
+                )
+            }
+        },
+    )
+
+    assert answer == "I cannot find this in the supplied sources."
 
 
 def test_partial_json_answer_extraction_handles_escapes_and_incomplete_escape() -> None:
