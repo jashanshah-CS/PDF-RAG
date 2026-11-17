@@ -452,6 +452,20 @@ complex tables, so OCR-labelled evidence should be checked against the source.
 - [x] Add a reranking stage and compare it against the frozen baseline
 - [x] Add regression thresholds to automated tests and CI
 
+## Version 4 roadmap
+
+Version 4 focuses on conversational, trustworthy document Q&A. The complete
+scope and acceptance criteria are in
+[`VERSION_4_PLAN.md`](VERSION_4_PLAN.md).
+
+- [ ] Add persistent conversation and message storage
+- [ ] Build conversation management and chat timeline UI
+- [ ] Rewrite follow-up questions into standalone retrieval queries
+- [ ] Stream local Ollama answers with cancellation and failure handling
+- [ ] Add claim-level citations and calibrated answer confidence
+- [ ] Benchmark an optional local cross-encoder reranker
+- [ ] Add a JSON conversational benchmark and CI quality gates
+
 ## Limitations
 
 - OCR is limited to English in the current version.
