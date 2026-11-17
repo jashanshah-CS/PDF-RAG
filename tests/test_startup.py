@@ -9,6 +9,7 @@ def settings(tmp_path: Path) -> AppSettings:
         data_dir=tmp_path / "data",
         chroma_path=tmp_path / "data" / "chroma",
         history_path=tmp_path / "data" / "history.db",
+        conversation_path=tmp_path / "data" / "conversations.db",
         model_cache=tmp_path / "models",
         embedding_model="test-model",
         embedding_local_only=True,

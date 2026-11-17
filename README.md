@@ -175,6 +175,7 @@ Copy `.env.example` to `.env` and change only the values you need:
 | `OLLAMA_CHAT_URL` | `http://localhost:11434/api/chat` | Ollama API for non-Docker runs; Compose overrides it |
 | `MAX_UPLOAD_MB` | `200` | Maximum uploaded file size |
 | `RAG_DATA_DIR` | `data` | Parent directory for ChromaDB and SQLite |
+| `CONVERSATION_PATH` | `data/conversations.db` | Version 4 multi-turn conversation database |
 | `MODEL_CACHE` | `.model-cache` | Sentence-transformer download cache |
 | `EMBEDDING_LOCAL_ONLY` | `false` | Prevent downloads only when the model is already cached |
 | `TESSERACT_CMD` | auto-detected | Optional custom Tesseract executable for local Windows runs |
@@ -400,6 +401,13 @@ was asked. This is distinct from citations: the selected-source list shows the
 allowed search scope, while citations show which retrieved sources actually
 supported the final answer.
 
+Version 4 adds a separate normalized SQLite database at
+`data/conversations.db` for conversations, selected source scopes, messages,
+message states, standalone retrieval queries, and citations. Keeping this
+separate preserves the existing readable question history. See
+[`docs/CONVERSATION_STORAGE.md`](docs/CONVERSATION_STORAGE.md) for the schema,
+transactions, configuration, and tested behaviour.
+
 ## Scanned PDFs and OCR
 
 OCR means **Optical Character Recognition**. A scanned PDF usually contains a
@@ -458,7 +466,7 @@ Version 4 focuses on conversational, trustworthy document Q&A. The complete
 scope and acceptance criteria are in
 [`VERSION_4_PLAN.md`](VERSION_4_PLAN.md).
 
-- [ ] Add persistent conversation and message storage
+- [x] Add persistent conversation and message storage
 - [ ] Build conversation management and chat timeline UI
 - [ ] Rewrite follow-up questions into standalone retrieval queries
 - [ ] Stream local Ollama answers with cancellation and failure handling

@@ -31,6 +31,7 @@ class AppSettings:
     data_dir: Path
     chroma_path: Path
     history_path: Path
+    conversation_path: Path
     model_cache: Path
     embedding_model: str
     embedding_local_only: bool
@@ -49,6 +50,9 @@ def load_settings() -> AppSettings:
         data_dir=data_dir,
         chroma_path=_path("CHROMA_PATH", data_dir / "chroma-v2"),
         history_path=_path("HISTORY_PATH", data_dir / "history.db"),
+        conversation_path=_path(
+            "CONVERSATION_PATH", data_dir / "conversations.db"
+        ),
         model_cache=_path("MODEL_CACHE", PROJECT_ROOT / ".model-cache"),
         embedding_model=os.getenv(
             "EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2"

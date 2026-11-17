@@ -21,6 +21,7 @@ def test_settings_support_container_paths_and_services(
 
     assert settings.chroma_path == data_dir / "chroma-v2"
     assert settings.history_path == data_dir / "history.db"
+    assert settings.conversation_path == data_dir / "conversations.db"
     assert settings.model_cache == model_cache
     assert settings.ollama_chat_url == "http://ollama:11434/api/chat"
     assert settings.ollama_model == "test-model:latest"

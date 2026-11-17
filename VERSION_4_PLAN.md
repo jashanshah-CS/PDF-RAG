@@ -16,7 +16,7 @@ retrieval quality established in Versions 1–3.
 
 ## Planned implementation order
 
-1. **Conversation storage**
+1. **Conversation storage** — completed
    - Add SQLite conversation and message records with stable identifiers.
    - Store roles, timestamps, selected sources, rewritten retrieval queries,
      answers, and citations.
