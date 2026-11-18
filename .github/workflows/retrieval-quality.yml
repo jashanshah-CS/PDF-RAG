@@ -1,4 +1,4 @@
-name: Retrieval quality
+name: Retrieval and conversation quality
 
 on:
   push:
@@ -44,10 +44,18 @@ jobs:
       - name: Enforce retrieval quality gates
         run: uv run python check_retrieval_quality.py --report tmp/ci-reranked-results.json
 
-      - name: Upload benchmark report
+      - name: Generate a fresh conversation benchmark
+        run: uv run python evaluate_conversations.py --output tmp/ci-conversation-results.json
+
+      - name: Enforce conversation quality gates
+        run: uv run python check_conversation_quality.py --report tmp/ci-conversation-results.json
+
+      - name: Upload benchmark reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: retrieval-benchmark-report
-          path: tmp/ci-reranked-results.json
+          name: quality-benchmark-reports
+          path: |
+            tmp/ci-reranked-results.json
+            tmp/ci-conversation-results.json
           if-no-files-found: ignore

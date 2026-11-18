@@ -372,6 +372,29 @@ Latency is measured but not gated because CI runner speed varies. See
 [`docs/RETRIEVAL_QUALITY_GATES.md`](docs/RETRIEVAL_QUALITY_GATES.md) for every
 threshold, the local workflow, failure behaviour, and CI design.
 
+### Automated conversation quality gates
+
+Version 4 adds a deterministic 14-case conversational benchmark. It exercises
+the same follow-up rewrite, grounded answer finalization, citation resolution,
+SQLite conversation storage, and incomplete-generation paths used by the app.
+Model responses are committed test fixtures, so the benchmark runs without
+Ollama or network access and measures application behaviour rather than model
+wording drift.
+
+Run it locally with:
+
+```powershell
+uv run python evaluate_conversations.py
+uv run python check_conversation_quality.py
+```
+
+All 14 committed cases must pass. The policy requires 100% accuracy for
+follow-up rewrites, ambiguous references, unsupported-answer handling,
+citation correctness, conversation isolation, and failed or cancelled
+generation. GitHub Actions creates and gates a fresh report on every push and
+pull request. See
+[`docs/CONVERSATION_QUALITY_GATES.md`](docs/CONVERSATION_QUALITY_GATES.md).
+
 Use one or more custom directories when comparing another corpus:
 
 ```powershell
@@ -516,7 +539,10 @@ scope and acceptance criteria are in
 - [x] Stream local Ollama answers with cancellation and failure handling
 - [x] Add claim-level citations and calibrated answer confidence
 - [x] Benchmark an optional local cross-encoder reranker
-- [ ] Add a JSON conversational benchmark and CI quality gates
+- [x] Add a JSON conversational benchmark and CI quality gates
+
+Version 4 is feature-complete. Every planned capability now has automated
+regression coverage.
 
 ## Limitations
 

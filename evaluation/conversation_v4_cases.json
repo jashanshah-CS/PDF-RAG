@@ -1,0 +1,193 @@
+{
+  "schema_version": 1,
+  "name": "version-4-conversational-quality",
+  "cases": [
+    {
+      "id": "follow-up-contractors",
+      "category": "follow_up_rewrite",
+      "question": "What about contractors?",
+      "history": [
+        {"role": "user", "content": "What is the Atlas remote-work policy?"},
+        {"role": "assistant", "content": "Atlas employees may work abroad for 20 business days."}
+      ],
+      "model_response": "Does the Atlas remote-work policy allow contractors to work abroad?",
+      "expected_standalone_query": "Does the Atlas remote-work policy allow contractors to work abroad?",
+      "expected_rewritten": true
+    },
+    {
+      "id": "follow-up-pronoun",
+      "category": "follow_up_rewrite",
+      "question": "How long is it retained?",
+      "history": [
+        {"role": "user", "content": "Explain the Delta customer data policy."},
+        {"role": "assistant", "content": "The Delta policy covers customer data retention."}
+      ],
+      "model_response": "How long does the Delta policy retain customer data?",
+      "expected_standalone_query": "How long does the Delta policy retain customer data?",
+      "expected_rewritten": true
+    },
+    {
+      "id": "follow-up-same-allowance",
+      "category": "follow_up_rewrite",
+      "question": "Does the same allowance apply to interns?",
+      "history": [
+        {"role": "user", "content": "What home-office allowance do employees receive?"},
+        {"role": "assistant", "content": "Employees receive a £400 annual home-office allowance."}
+      ],
+      "model_response": "Does the £400 annual home-office allowance apply to interns?",
+      "expected_standalone_query": "Does the £400 annual home-office allowance apply to interns?",
+      "expected_rewritten": true
+    },
+    {
+      "id": "ambiguous-it",
+      "category": "ambiguous_reference",
+      "question": "Does it apply?",
+      "history": [
+        {"role": "user", "content": "Tell me about remote work and annual leave."},
+        {"role": "assistant", "content": "Those are separate policies."}
+      ],
+      "model_response": "Does it apply?",
+      "expected_standalone_query": "Does it apply?",
+      "expected_rewritten": false
+    },
+    {
+      "id": "ambiguous-that",
+      "category": "ambiguous_reference",
+      "question": "What about that?",
+      "history": [
+        {"role": "user", "content": "Compare the travel limit with the expense deadline."},
+        {"role": "assistant", "content": "The two rules have different conditions."}
+      ],
+      "model_response": "What about that?",
+      "expected_standalone_query": "What about that?",
+      "expected_rewritten": false
+    },
+    {
+      "id": "unsupported-lunch",
+      "category": "unsupported_answer",
+      "question": "What pizza is served for lunch?",
+      "evidence": [
+        {"source": "benefits.pdf", "page": 4, "text": "Employees receive 25 days of annual leave."}
+      ],
+      "model_output": {
+        "answer": "Pizza is served for lunch on Friday.",
+        "source_numbers": [1],
+        "claims": [{"text": "Pizza is served for lunch on Friday.", "source_numbers": [1]}]
+      },
+      "expected_answer": "I cannot find this in the supplied sources.",
+      "expected_source_numbers": [],
+      "expected_confidence": "unsupported"
+    },
+    {
+      "id": "unsupported-parking",
+      "category": "unsupported_answer",
+      "question": "How many parking spaces are available?",
+      "evidence": [
+        {"source": "travel.pdf", "page": 2, "text": "Rail travel must be booked through the approved portal."}
+      ],
+      "model_output": {
+        "answer": "There are 120 parking spaces available.",
+        "source_numbers": [1],
+        "claims": [{"text": "There are 120 parking spaces available.", "source_numbers": [1]}]
+      },
+      "expected_answer": "I cannot find this in the supplied sources.",
+      "expected_source_numbers": [],
+      "expected_confidence": "unsupported"
+    },
+    {
+      "id": "citation-single-claim",
+      "category": "citation_correctness",
+      "question": "What is the annual leave allowance?",
+      "evidence": [
+        {"source": "benefits.pdf", "page": 4, "text": "Employees receive 25 days of annual leave."}
+      ],
+      "model_output": {
+        "answer": "Employees receive 25 days of annual leave.",
+        "source_numbers": [1],
+        "claims": [{"text": "Employees receive 25 days of annual leave.", "source_numbers": [1]}]
+      },
+      "expected_answer": "Employees receive 25 days of annual leave. [Source 1]",
+      "expected_source_numbers": [1],
+      "expected_confidence": "supported"
+    },
+    {
+      "id": "citation-multiple-claims",
+      "category": "citation_correctness",
+      "question": "Summarize the policy details.",
+      "evidence": [
+        {"source": "remote-work.pdf", "page": 3, "text": "Employees may work remotely for three days each week."},
+        {"source": "expenses.pdf", "page": 8, "text": "Expense claims must be submitted within 30 days."}
+      ],
+      "model_output": {
+        "answer": "The policies cover remote work and expenses.",
+        "source_numbers": [1, 2],
+        "claims": [
+          {"text": "Employees may work remotely for three days each week.", "source_numbers": [1]},
+          {"text": "Expense claims must be submitted within 30 days.", "source_numbers": [2]}
+        ]
+      },
+      "expected_answer": "Employees may work remotely for three days each week. [Source 1]\nExpense claims must be submitted within 30 days. [Source 2]",
+      "expected_source_numbers": [1, 2],
+      "expected_confidence": "supported"
+    },
+    {
+      "id": "citation-limited-overlap",
+      "category": "citation_correctness",
+      "question": "What does the document say about the allowance?",
+      "evidence": [
+        {"source": "allowance.pdf", "page": 6, "text": "The home-office allowance is £400 per year."}
+      ],
+      "model_output": {
+        "answer": "The annual allowance is documented.",
+        "source_numbers": [1],
+        "claims": [{"text": "The annual allowance is documented.", "source_numbers": [1]}]
+      },
+      "expected_answer": "The annual allowance is documented. [Source 1]",
+      "expected_source_numbers": [1],
+      "expected_confidence": "uncertain"
+    },
+    {
+      "id": "isolation-private-topic",
+      "category": "conversation_isolation",
+      "question": "What about contractors?",
+      "active_history": [
+        {"role": "user", "content": "Discuss Atlas remote work."},
+        {"role": "assistant", "content": "Atlas permits limited remote work."}
+      ],
+      "other_history": [
+        {"role": "user", "content": "PRIVATE ORION ACQUISITION TOPIC"},
+        {"role": "assistant", "content": "PRIVATE ORION ANSWER"}
+      ],
+      "model_response": "Does Atlas remote work apply to contractors?",
+      "expected_standalone_query": "Does Atlas remote work apply to contractors?"
+    },
+    {
+      "id": "isolation-separate-benefits",
+      "category": "conversation_isolation",
+      "question": "Does it include interns?",
+      "active_history": [
+        {"role": "user", "content": "Explain the Cedar benefits plan."},
+        {"role": "assistant", "content": "The Cedar plan covers permanent employees."}
+      ],
+      "other_history": [
+        {"role": "user", "content": "CONFIDENTIAL FALCON INCIDENT"}
+      ],
+      "model_response": "Does the Cedar benefits plan include interns?",
+      "expected_standalone_query": "Does the Cedar benefits plan include interns?"
+    },
+    {
+      "id": "generation-cancelled",
+      "category": "incomplete_generation",
+      "terminal_status": "cancelled",
+      "draft_content": "Sensitive partial answer",
+      "final_content": "Generation stopped before a complete answer was produced."
+    },
+    {
+      "id": "generation-failed",
+      "category": "incomplete_generation",
+      "terminal_status": "failed",
+      "draft_content": "Unvalidated partial answer",
+      "final_content": "I could not generate an answer: model unavailable."
+    }
+  ]
+}

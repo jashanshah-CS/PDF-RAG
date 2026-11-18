@@ -49,7 +49,7 @@ retrieval quality established in Versions 1–3.
      reranker.
    - Adopt it only if quality improvement justifies model size and latency.
 
-7. **Evaluation and CI**
+7. **Evaluation and CI** — completed
    - Add versioned JSON cases for follow-ups, ambiguous references,
      unsupported questions, citation correctness, and conversation isolation.
    - Add automated regression thresholds and GitHub Actions checks.
@@ -63,6 +63,9 @@ retrieval quality established in Versions 1–3.
 - Interrupted or failed generation does not create a valid completed answer.
 - All existing Version 1–3 tests continue to pass.
 - The Version 4 conversational benchmark passes its committed quality gates.
+
+All completion criteria are enforced by the committed conversational benchmark,
+the full Pytest suite, and GitHub Actions.
 
 ## Out of scope
 

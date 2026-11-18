@@ -1,0 +1,254 @@
+{
+  "schema_version": 1,
+  "benchmark": "version-4-conversational-quality",
+  "summary": {
+    "case_count": 14,
+    "passed_count": 14,
+    "pass_rate": 1.0,
+    "category_accuracy": {
+      "ambiguous_reference": 1.0,
+      "citation_correctness": 1.0,
+      "conversation_isolation": 1.0,
+      "follow_up_rewrite": 1.0,
+      "incomplete_generation": 1.0,
+      "unsupported_answer": 1.0
+    }
+  },
+  "results": [
+    {
+      "id": "follow-up-contractors",
+      "category": "follow_up_rewrite",
+      "passed": true,
+      "checks": {
+        "standalone_query": true,
+        "rewrite_attempted": true,
+        "rewrite_decision": true
+      },
+      "actual": {
+        "standalone_query": "Does the Atlas remote-work policy allow contractors to work abroad?",
+        "attempted": true,
+        "rewritten": true
+      }
+    },
+    {
+      "id": "follow-up-pronoun",
+      "category": "follow_up_rewrite",
+      "passed": true,
+      "checks": {
+        "standalone_query": true,
+        "rewrite_attempted": true,
+        "rewrite_decision": true
+      },
+      "actual": {
+        "standalone_query": "How long does the Delta policy retain customer data?",
+        "attempted": true,
+        "rewritten": true
+      }
+    },
+    {
+      "id": "follow-up-same-allowance",
+      "category": "follow_up_rewrite",
+      "passed": true,
+      "checks": {
+        "standalone_query": true,
+        "rewrite_attempted": true,
+        "rewrite_decision": true
+      },
+      "actual": {
+        "standalone_query": "Does the \u00a3400 annual home-office allowance apply to interns?",
+        "attempted": true,
+        "rewritten": true
+      }
+    },
+    {
+      "id": "ambiguous-it",
+      "category": "ambiguous_reference",
+      "passed": true,
+      "checks": {
+        "standalone_query": true,
+        "rewrite_attempted": true,
+        "rewrite_decision": true
+      },
+      "actual": {
+        "standalone_query": "Does it apply?",
+        "attempted": true,
+        "rewritten": false
+      }
+    },
+    {
+      "id": "ambiguous-that",
+      "category": "ambiguous_reference",
+      "passed": true,
+      "checks": {
+        "standalone_query": true,
+        "rewrite_attempted": true,
+        "rewrite_decision": true
+      },
+      "actual": {
+        "standalone_query": "What about that?",
+        "attempted": true,
+        "rewritten": false
+      }
+    },
+    {
+      "id": "unsupported-lunch",
+      "category": "unsupported_answer",
+      "passed": true,
+      "checks": {
+        "answer": true,
+        "source_numbers": true,
+        "confidence": true,
+        "citations_resolve": true
+      },
+      "actual": {
+        "answer": "I cannot find this in the supplied sources.",
+        "source_numbers": [],
+        "confidence": "unsupported",
+        "citation_count": 0
+      }
+    },
+    {
+      "id": "unsupported-parking",
+      "category": "unsupported_answer",
+      "passed": true,
+      "checks": {
+        "answer": true,
+        "source_numbers": true,
+        "confidence": true,
+        "citations_resolve": true
+      },
+      "actual": {
+        "answer": "I cannot find this in the supplied sources.",
+        "source_numbers": [],
+        "confidence": "unsupported",
+        "citation_count": 0
+      }
+    },
+    {
+      "id": "citation-single-claim",
+      "category": "citation_correctness",
+      "passed": true,
+      "checks": {
+        "answer": true,
+        "source_numbers": true,
+        "confidence": true,
+        "citations_resolve": true
+      },
+      "actual": {
+        "answer": "Employees receive 25 days of annual leave. [Source 1]",
+        "source_numbers": [
+          1
+        ],
+        "confidence": "supported",
+        "citation_count": 1
+      }
+    },
+    {
+      "id": "citation-multiple-claims",
+      "category": "citation_correctness",
+      "passed": true,
+      "checks": {
+        "answer": true,
+        "source_numbers": true,
+        "confidence": true,
+        "citations_resolve": true
+      },
+      "actual": {
+        "answer": "Employees may work remotely for three days each week. [Source 1]\nExpense claims must be submitted within 30 days. [Source 2]",
+        "source_numbers": [
+          1,
+          2
+        ],
+        "confidence": "supported",
+        "citation_count": 2
+      }
+    },
+    {
+      "id": "citation-limited-overlap",
+      "category": "citation_correctness",
+      "passed": true,
+      "checks": {
+        "answer": true,
+        "source_numbers": true,
+        "confidence": true,
+        "citations_resolve": true
+      },
+      "actual": {
+        "answer": "The annual allowance is documented. [Source 1]",
+        "source_numbers": [
+          1
+        ],
+        "confidence": "uncertain",
+        "citation_count": 1
+      }
+    },
+    {
+      "id": "isolation-private-topic",
+      "category": "conversation_isolation",
+      "passed": true,
+      "checks": {
+        "standalone_query": true,
+        "active_history_present": true,
+        "other_history_absent": true,
+        "stored_histories_isolated": true
+      },
+      "actual": {
+        "standalone_query": "Does Atlas remote work apply to contractors?",
+        "active_message_count": 2,
+        "other_message_count": 2
+      }
+    },
+    {
+      "id": "isolation-separate-benefits",
+      "category": "conversation_isolation",
+      "passed": true,
+      "checks": {
+        "standalone_query": true,
+        "active_history_present": true,
+        "other_history_absent": true,
+        "stored_histories_isolated": true
+      },
+      "actual": {
+        "standalone_query": "Does the Cedar benefits plan include interns?",
+        "active_message_count": 2,
+        "other_message_count": 1
+      }
+    },
+    {
+      "id": "generation-cancelled",
+      "category": "incomplete_generation",
+      "passed": true,
+      "checks": {
+        "terminal_status": true,
+        "partial_answer_discarded": true,
+        "not_completed": true,
+        "no_citations": true,
+        "no_confidence": true
+      },
+      "actual": {
+        "status": "cancelled",
+        "content": "Generation stopped before a complete answer was produced.",
+        "citation_count": 0,
+        "confidence": null
+      }
+    },
+    {
+      "id": "generation-failed",
+      "category": "incomplete_generation",
+      "passed": true,
+      "checks": {
+        "terminal_status": true,
+        "partial_answer_discarded": true,
+        "not_completed": true,
+        "no_citations": true,
+        "no_confidence": true
+      },
+      "actual": {
+        "status": "failed",
+        "content": "I could not generate an answer: model unavailable.",
+        "citation_count": 0,
+        "confidence": null
+      }
+    }
+  ]
+}
