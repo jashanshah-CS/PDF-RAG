@@ -6,10 +6,12 @@ asking questions about a PDF and receiving answers with page-level citations.
 The project is being built gradually so that every stage can be understood and
 tested before the next feature is added.
 
-Version 3 is feature-complete on the `version-3` branch. It adds benchmarked
-hybrid retrieval, focused context, deterministic reranking, and automated
-quality gates. See [`RELEASE_NOTES_V3.md`](RELEASE_NOTES_V3.md) for the final
-architecture, measurements, verification, and known limitations.
+Version 4 is feature-complete on `main`. It adds isolated multi-turn
+conversations, context-aware follow-up retrieval, cancellable streaming,
+claim-level citations, calibrated evidence states, and conversational quality
+gates while retaining Version 3's benchmarked retrieval pipeline. See
+[`RELEASE_NOTES_V4.md`](RELEASE_NOTES_V4.md) for the final architecture,
+measurements, verification, and known limitations.
 
 ## Current features
 
@@ -37,9 +39,15 @@ architecture, measurements, verification, and known limitations.
 - Select exactly which saved PDFs and websites may be searched for each question
 - Keep previous uploads in a compact document-library selector and automatically
   select newly added or updated sources
+- Create, rename, search, select, and delete isolated document conversations
+- Preserve each conversation's own source selection and message history in SQLite
+- Rewrite context-dependent follow-ups into standalone retrieval questions
 - Generate an evidence-grounded answer with local Qwen3 8B through Ollama
+- Stream answers through cancellable background jobs and discard incomplete drafts
 - Support alternative Ollama chat models with reasoning disabled for fast document Q&A
 - Validate structured model output and render citations programmatically
+- Attach source evidence to individual factual claims and show a calibrated
+  supported, uncertain, or unsupported state
 - Show cited evidence in expandable source cards with page, section, excerpt,
   and original webpage links when available
 - Refuse questions unsupported by the retrieved text
